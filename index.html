@@ -50,32 +50,6 @@
 
   .poll-question { font-size: 17px; font-weight: 600; color: #ffffff; line-height: 1.4; }
   .poll-body { padding: 20px 24px 24px; }
-
-  /* ── Loading skeleton ── */
-  .skeleton {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .skel-bar {
-    height: 46px;
-    background: linear-gradient(90deg, var(--brand-light) 25%, var(--brand-mid) 50%, var(--brand-light) 75%);
-    background-size: 200% 100%;
-    border-radius: var(--radius);
-    animation: shimmer 1.4s infinite;
-  }
-
-  .skel-bar:nth-child(2) { animation-delay: 0.1s; }
-  .skel-bar:nth-child(3) { animation-delay: 0.2s; }
-  .skel-bar:nth-child(4) { animation-delay: 0.3s; }
-
-  @keyframes shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  /* ── Options ── */
   .options { display: flex; flex-direction: column; gap: 10px; }
 
   .option-btn {
@@ -109,7 +83,6 @@
 
   .option-btn:hover .option-indicator { border-color: var(--brand); }
 
-  /* ── Submit / loading ── */
   .submit-btn {
     margin-top: 16px; width: 100%; padding: 12px;
     background: var(--brand); color: #fff; border: none;
@@ -123,8 +96,12 @@
   .submit-btn:disabled { background: var(--brand-mid); cursor: not-allowed; transform: none; }
 
   .loading-row {
-    display: none; align-items: center; gap: 10px;
-    margin-top: 14px; font-size: 13px; color: var(--text-muted);
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-muted);
   }
 
   .spinner {
@@ -138,7 +115,6 @@
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── Results ── */
   .results { display: flex; flex-direction: column; gap: 14px; }
   .result-row { display: flex; flex-direction: column; gap: 5px; }
   .result-label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
@@ -166,15 +142,16 @@
   .total-note { margin-top: 10px; font-size: 12px; color: var(--text-muted); text-align: right; }
   .voted-note { display: none; font-size: 12px; color: var(--text-muted); margin-top: 12px; text-align: center; }
 
-  /* ── Error banner ── */
   .error-banner {
     display: none;
     padding: 12px 14px;
     background: #fdf3f2;
     border: 1.5px solid #e8b4b0;
     border-radius: var(--radius);
-    font-size: 13px; color: #7a2020;
-    margin-top: 12px; line-height: 1.5;
+    font-size: 13px;
+    color: #7a2020;
+    margin-top: 12px;
+    line-height: 1.5;
   }
 
   @media (max-width: 480px) {
@@ -190,16 +167,17 @@
 
 <!-- ═══════════════════════════════════════════════════════
      POLL CONFIG
-     This is the ONLY thing that ever needs editing.
-     Update SCRIPT_URL once when you first deploy.
-     Update QUESTION + OPTIONS only if the poll changes.
+     Before each new intake update TWO things:
+       1. INTAKE_ID  — must match the tab name in Google Sheet
+                       (created via Poll Admin menu in the Sheet)
+       2. question + options — if the poll question changes
 
-     The intake ID is now managed entirely from the
-     Google Sheet via Poll Admin menu — no code changes
-     needed between intakes.
+     The SCRIPT_URL never changes.
      ═══════════════════════════════════════════════════════ -->
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI2asjsvXhJ9RHo3GFlSbbAvRL08knfKty_iX64SHv6hwM7gix5WR2IRV0XOGpClIQ/exec";
+
+const INTAKE_ID = "TestIntake1"; // ← update this per intake
 
 const POLL = {
   question: "Which learning format do you find most effective?",
@@ -221,16 +199,7 @@ const POLL = {
   </div>
   <div class="poll-body">
 
-    <!-- Skeleton shown while loading -->
-    <div id="skeleton-view" class="skeleton">
-      <div class="skel-bar"></div>
-      <div class="skel-bar"></div>
-      <div class="skel-bar"></div>
-      <div class="skel-bar"></div>
-    </div>
-
-    <!-- Vote view -->
-    <div id="vote-view" style="display:none">
+    <div id="vote-view">
       <div class="options" id="options-list" role="radiogroup" aria-labelledby="poll-question"></div>
       <div class="loading-row" id="vote-loading">
         <div class="spinner"></div>
@@ -240,7 +209,6 @@ const POLL = {
       <div class="error-banner" id="vote-error"></div>
     </div>
 
-    <!-- Results view -->
     <div id="results-view" style="display:none">
       <div class="results" id="results-list"></div>
       <p class="total-note" id="total-note"></p>
@@ -255,138 +223,104 @@ const POLL = {
       <p class="voted-note" id="voted-note">You've already responded to this poll.</p>
     </div>
 
-    <!-- Error view -->
-    <div id="error-view" style="display:none">
-      <div class="error-banner" id="load-error" style="display:block"></div>
-    </div>
-
   </div>
 </div>
 
 
 <script>
 (function () {
+  const LS_VOTED = "lms_poll_voted_" + INTAKE_ID;
+  let   selected = null;
 
-  let activeIntakeId = null;
-  let selected       = null;
-
-  // ── INIT ─────────────────────────────────────────────
-  // On load: fetch active intake + existing results in one request
+  // ── BUILD POLL ───────────────────────────────────────
   document.getElementById("poll-question").textContent = POLL.question;
-  buildOptions();
 
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    body:   JSON.stringify({ action: "load" })
-  })
-  .then(function (r) { return r.json(); })
-  .then(function (data) {
-    if (!data.ok) {
-      showError(data.error || "Could not load poll. Please try again later.");
-      return;
-    }
-
-    activeIntakeId = data.intakeId;
-
-    // Check if this learner already voted in this intake
-    const alreadyVoted = localStorage.getItem("lms_voted_" + activeIntakeId);
-
-    if (alreadyVoted) {
-      // Show frozen results for their intake
-      renderResults(data.counts, data.total, false, alreadyVoted);
-    } else {
-      // Show voting UI
-      hide("skeleton-view");
-      show("vote-view");
-    }
-  })
-  .catch(function () {
-    showError("Could not reach the server. Please check your connection and try again.");
+  const list = document.getElementById("options-list");
+  POLL.options.forEach(function (opt, i) {
+    const btn = document.createElement("button");
+    btn.className = "option-btn";
+    btn.setAttribute("role", "radio");
+    btn.setAttribute("aria-checked", "false");
+    btn.innerHTML =
+      '<span class="option-indicator" aria-hidden="true"></span>' +
+      '<span>' + opt + '</span>';
+    btn.addEventListener("click", function () { pick(i); });
+    list.appendChild(btn);
   });
-
-
-  // ── BUILD OPTIONS ────────────────────────────────────
-  function buildOptions() {
-    const list = document.getElementById("options-list");
-    POLL.options.forEach(function (opt, i) {
-      const btn = document.createElement("button");
-      btn.className = "option-btn";
-      btn.setAttribute("role", "radio");
-      btn.setAttribute("aria-checked", "false");
-      btn.innerHTML =
-        '<span class="option-indicator" aria-hidden="true"></span>' +
-        '<span>' + opt + '</span>';
-      btn.addEventListener("click", function () { pick(i); });
-      list.appendChild(btn);
-    });
-  }
-
 
   // ── SELECT OPTION ────────────────────────────────────
   function pick(i) {
     selected = i;
-    document.getElementById("options-list")
-      .querySelectorAll(".option-btn")
-      .forEach(function (b, idx) {
-        const on = idx === i;
-        b.setAttribute("aria-checked", on ? "true" : "false");
-        b.style.borderColor = on ? "var(--brand)"       : "";
-        b.style.background  = on ? "var(--brand-light)" : "";
-        const ind = b.querySelector(".option-indicator");
-        ind.style.background  = on ? "var(--brand)" : "";
-        ind.style.borderColor = on ? "var(--brand)" : "";
-        ind.innerHTML = on
-          ? '<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="3" fill="#fff"/></svg>'
-          : "";
-      });
+    list.querySelectorAll(".option-btn").forEach(function (b, idx) {
+      const on = idx === i;
+      b.setAttribute("aria-checked", on ? "true" : "false");
+      b.style.borderColor = on ? "var(--brand)"       : "";
+      b.style.background  = on ? "var(--brand-light)" : "";
+      const ind = b.querySelector(".option-indicator");
+      ind.style.background  = on ? "var(--brand)" : "";
+      ind.style.borderColor = on ? "var(--brand)" : "";
+      ind.innerHTML = on
+        ? '<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="3" fill="#fff"/></svg>'
+        : "";
+    });
     document.getElementById("submit-btn").disabled = false;
   }
 
-
   // ── SUBMIT VOTE ──────────────────────────────────────
   window.submitVote = function () {
-    if (selected === null || !activeIntakeId) return;
+    if (selected === null) return;
 
     const chosenOption = POLL.options[selected];
-    setVoteLoading(true);
-    hideVoteError();
+    setLoading(true);
+    hideError();
 
     fetch(SCRIPT_URL, {
       method: "POST",
       body:   JSON.stringify({
         action:   "vote",
-        intakeId: activeIntakeId,
+        intakeId: INTAKE_ID,
         option:   chosenOption
       })
     })
     .then(function (r) { return r.json(); })
     .then(function (data) {
       if (data.ok) {
-        // Save vote to localStorage so returning learners see their results
-        localStorage.setItem("lms_voted_" + activeIntakeId, chosenOption);
-        renderResults(data.counts, data.total, true, chosenOption);
-      } else if (data.switched) {
-        // Intake changed while learner was on the page — reload silently
-        activeIntakeId = data.intakeId;
-        location.reload();
+        localStorage.setItem(LS_VOTED, chosenOption);
+        loadResults(true);
       } else {
-        showVoteError(data.error || "Could not save your vote. Please try again.");
-        setVoteLoading(false);
+        showError(data.error || "Could not save your vote. Please try again.");
         resetButtons();
       }
     })
     .catch(function () {
-      showVoteError("Could not reach the server. Please check your connection.");
-      setVoteLoading(false);
+      showError("Could not reach the server. Please check your connection and try again.");
       resetButtons();
+    })
+    .finally(function () {
+      setLoading(false);
     });
   };
 
+  // ── LOAD RESULTS ─────────────────────────────────────
+  function loadResults(justVoted) {
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      body:   JSON.stringify({ action: "results", intakeId: INTAKE_ID })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      renderResults(data.ok ? data.counts : {}, data.ok ? data.total : 0, justVoted);
+    })
+    .catch(function () {
+      renderResults({}, 0, justVoted);
+    });
+  }
 
   // ── RENDER RESULTS ───────────────────────────────────
-  function renderResults(counts, total, justVoted, myAnswer) {
-    const box = document.getElementById("results-list");
-    box.innerHTML = "";
+  function renderResults(counts, total, justVoted) {
+    const myAnswer = localStorage.getItem(LS_VOTED);
+    const box      = document.getElementById("results-list");
+    box.innerHTML  = "";
 
     POLL.options.forEach(function (opt) {
       const votes = (counts && counts[opt]) ? counts[opt] : 0;
@@ -409,10 +343,8 @@ const POLL = {
       total + " response" + (total !== 1 ? "s" : "") + " so far";
     document.getElementById("thanks-msg").style.display = justVoted ? "flex"  : "none";
     document.getElementById("voted-note").style.display = justVoted ? "none"  : "block";
-
-    hide("skeleton-view");
-    hide("vote-view");
-    show("results-view");
+    document.getElementById("vote-view").style.display    = "none";
+    document.getElementById("results-view").style.display = "block";
 
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
@@ -423,42 +355,32 @@ const POLL = {
     });
   }
 
-
   // ── HELPERS ──────────────────────────────────────────
-  function show(id) { document.getElementById(id).style.display = "block"; }
-  function hide(id) { document.getElementById(id).style.display = "none"; }
-
-  function showError(msg) {
-    hide("skeleton-view");
-    hide("vote-view");
-    const el = document.getElementById("load-error");
-    el.textContent = msg;
-    show("error-view");
+  function setLoading(on) {
+    document.getElementById("vote-loading").style.display = on ? "flex" : "none";
+    document.getElementById("submit-btn").disabled = on;
+    list.querySelectorAll(".option-btn").forEach(function (b) { b.disabled = on; });
   }
 
-  function showVoteError(msg) {
+  function resetButtons() {
+    list.querySelectorAll(".option-btn").forEach(function (b) { b.disabled = false; });
+    document.getElementById("submit-btn").disabled = (selected === null);
+  }
+
+  function showError(msg) {
     const el = document.getElementById("vote-error");
     el.textContent   = msg;
     el.style.display = "block";
   }
 
-  function hideVoteError() {
+  function hideError() {
     document.getElementById("vote-error").style.display = "none";
   }
 
-  function setVoteLoading(on) {
-    document.getElementById("vote-loading").style.display = on ? "flex" : "none";
-    document.getElementById("submit-btn").disabled = on;
-    document.getElementById("options-list")
-      .querySelectorAll(".option-btn")
-      .forEach(function (b) { b.disabled = on; });
-  }
-
-  function resetButtons() {
-    document.getElementById("options-list")
-      .querySelectorAll(".option-btn")
-      .forEach(function (b) { b.disabled = false; });
-    document.getElementById("submit-btn").disabled = (selected === null);
+  // ── INIT ─────────────────────────────────────────────
+  // If already voted on this intake, go straight to results
+  if (localStorage.getItem(LS_VOTED)) {
+    loadResults(false);
   }
 
 })();
