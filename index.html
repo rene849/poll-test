@@ -4,166 +4,202 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Poll</title>
-
 <style>
-:root {
-  --brand: #263997;
-  --brand-dark: #1a2a6e;
-  --brand-light: #e8ecf9;
-  --brand-mid: #c5ceee;
-  --text: #111111;
-  --text-muted: #555555;
-  --bg: #ffffff;
-  --radius: 8px;
-  --font: system-ui, "Segoe UI", sans-serif;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html, body {
-  font-family: var(--font);
-  background: transparent;
-  color: var(--text);
-}
-
-body {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 16px;
-}
-
-.poll {
-  width: 100%;
-  max-width: 600px;
-  background: var(--bg);
-  border: 1px solid var(--brand-mid);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 12px rgba(38,57,151,0.08);
-}
-
-.poll-header {
-  background: var(--brand);
-  padding: 18px 24px;
-}
-
-.poll-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255,255,255,0.7);
-  margin-bottom: 6px;
-}
-
-.poll-question {
-  font-size: 17px;
-  font-weight: 600;
-  color: #fff;
-  line-height: 1.4;
-}
-
-.poll-body {
-  padding: 20px 24px 24px;
-}
-
-.options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.option-btn {
-  width: 100%;
-  padding: 14px 16px;
-  border: 1px solid var(--brand-mid);
-  border-radius: var(--radius);
-  background: white;
-  cursor: pointer;
-  text-align: left;
-  font-size: 15px;
-  transition: 0.2s;
-}
-
-.option-btn:hover {
-  border-color: var(--brand);
-  background: var(--brand-light);
-}
-
-.option-btn.selected {
-  border-color: var(--brand);
-  background: var(--brand-light);
-}
-
-.submit-btn {
-  width: 100%;
-  margin-top: 16px;
-  padding: 12px;
-  border: none;
-  border-radius: var(--radius);
-  background: var(--brand);
-  color: white;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.submit-btn:disabled {
-  background: var(--brand-mid);
-  cursor: not-allowed;
-}
-
-.results {
-  margin-top: 20px;
-  display: none;
-}
-
-.result-row {
-  margin-bottom: 14px;
-}
-
-.result-label {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 6px;
-  font-size: 14px;
-}
-
-.bar-track {
-  height: 10px;
-  background: var(--brand-light);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  width: 0%;
-  background: var(--brand);
-  transition: width 0.5s ease;
-}
-
-@media (max-width: 480px) {
-  .poll-header {
-    padding: 14px 16px;
+  :root {
+    --brand:       #263997;
+    --brand-dark:  #1a2a6e;
+    --brand-light: #e8ecf9;
+    --brand-mid:   #c5ceee;
+    --text:        #111111;
+    --text-muted:  #555555;
+    --bg:          #ffffff;
+    --radius:      8px;
+    --font:        system-ui, 'Segoe UI', sans-serif;
   }
 
-  .poll-body {
-    padding: 14px 16px 18px;
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: var(--font); background: transparent; color: var(--text); }
+
+  body {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 16px;
   }
-}
+
+  .poll {
+    width: 100%;
+    max-width: 600px;
+    border: 1.5px solid var(--brand-mid);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg);
+    box-shadow: 0 2px 12px rgba(38,57,151,0.08);
+  }
+
+  .poll-header { background: var(--brand); padding: 18px 24px; }
+
+  .poll-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 6px;
+  }
+
+  .poll-question { font-size: 17px; font-weight: 600; color: #ffffff; line-height: 1.4; }
+  .poll-body { padding: 20px 24px 24px; }
+
+  /* ── Loading skeleton ── */
+  .skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .skel-bar {
+    height: 46px;
+    background: linear-gradient(90deg, var(--brand-light) 25%, var(--brand-mid) 50%, var(--brand-light) 75%);
+    background-size: 200% 100%;
+    border-radius: var(--radius);
+    animation: shimmer 1.4s infinite;
+  }
+
+  .skel-bar:nth-child(2) { animation-delay: 0.1s; }
+  .skel-bar:nth-child(3) { animation-delay: 0.2s; }
+  .skel-bar:nth-child(4) { animation-delay: 0.3s; }
+
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ── Options ── */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+
+  .option-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1.5px solid var(--brand-mid);
+    border-radius: var(--radius);
+    background: var(--bg);
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 15px;
+    color: var(--text);
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+    width: 100%;
+  }
+
+  .option-btn:hover  { border-color: var(--brand); background: var(--brand-light); }
+  .option-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .option-indicator {
+    width: 20px; height: 20px; min-width: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--brand-mid);
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .option-btn:hover .option-indicator { border-color: var(--brand); }
+
+  /* ── Submit / loading ── */
+  .submit-btn {
+    margin-top: 16px; width: 100%; padding: 12px;
+    background: var(--brand); color: #fff; border: none;
+    border-radius: var(--radius); font-family: var(--font);
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .submit-btn:hover   { background: var(--brand-dark); }
+  .submit-btn:active  { transform: scale(0.98); }
+  .submit-btn:disabled { background: var(--brand-mid); cursor: not-allowed; transform: none; }
+
+  .loading-row {
+    display: none; align-items: center; gap: 10px;
+    margin-top: 14px; font-size: 13px; color: var(--text-muted);
+  }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid var(--brand-mid);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Results ── */
+  .results { display: flex; flex-direction: column; gap: 14px; }
+  .result-row { display: flex; flex-direction: column; gap: 5px; }
+  .result-label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .result-label { font-size: 14px; color: var(--text); font-weight: 500; }
+  .result-label.mine { color: var(--brand); font-weight: 700; }
+  .result-pct { font-size: 13px; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+  .bar-track { height: 10px; background: var(--brand-light); border-radius: 999px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--brand-mid); border-radius: 999px; width: 0%; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+  .bar-fill.mine { background: var(--brand); }
+  .result-count { font-size: 12px; color: var(--text-muted); }
+
+  .thanks {
+    display: none; align-items: center; gap: 10px;
+    margin-top: 14px; padding: 10px 14px;
+    background: var(--brand-light); border-radius: var(--radius);
+    font-size: 13px; color: var(--brand-dark); font-weight: 500;
+  }
+
+  .thanks-icon {
+    width: 18px; height: 18px; min-width: 18px;
+    background: var(--brand); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .total-note { margin-top: 10px; font-size: 12px; color: var(--text-muted); text-align: right; }
+  .voted-note { display: none; font-size: 12px; color: var(--text-muted); margin-top: 12px; text-align: center; }
+
+  /* ── Error banner ── */
+  .error-banner {
+    display: none;
+    padding: 12px 14px;
+    background: #fdf3f2;
+    border: 1.5px solid #e8b4b0;
+    border-radius: var(--radius);
+    font-size: 13px; color: #7a2020;
+    margin-top: 12px; line-height: 1.5;
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 10px; }
+    .poll-header { padding: 14px 16px; }
+    .poll-body { padding: 14px 16px 18px; }
+    .poll-question { font-size: 15px; }
+    .option-btn { font-size: 14px; padding: 11px 12px; }
+  }
 </style>
 </head>
 <body>
 
-<!-- POLL CONFIG -->
+<!-- ═══════════════════════════════════════════════════════
+     POLL CONFIG
+     This is the ONLY thing that ever needs editing.
+     Update SCRIPT_URL once when you first deploy.
+     Update QUESTION + OPTIONS only if the poll changes.
+
+     The intake ID is now managed entirely from the
+     Google Sheet via Poll Admin menu — no code changes
+     needed between intakes.
+     ═══════════════════════════════════════════════════════ -->
 <script>
-const SCRIPT_URL = "YOUR_GOOGLE_SCRIPT_URL_HERE";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI2asjsvXhJ9RHo3GFlSbbAvRL08knfKty_iX64SHv6hwM7gix5WR2IRV0XOGpClIQ/exec";
 
 const POLL = {
   question: "Which learning format do you find most effective?",
@@ -175,111 +211,257 @@ const POLL = {
   ]
 };
 </script>
+<!-- ══════════════ END CONFIG ═══════════════════════════ -->
 
-<div class="poll">
+
+<div class="poll" role="form" aria-label="Course poll">
   <div class="poll-header">
-    <div class="poll-label">Quick poll</div>
+    <div class="poll-label" aria-hidden="true">Quick poll</div>
     <div class="poll-question" id="poll-question"></div>
   </div>
-
   <div class="poll-body">
-    <div class="options" id="options-list"></div>
 
-    <button
-      class="submit-btn"
-      id="submit-btn"
-      disabled
-      onclick="submitVote()"
-    >
-      Submit answer
-    </button>
+    <!-- Skeleton shown while loading -->
+    <div id="skeleton-view" class="skeleton">
+      <div class="skel-bar"></div>
+      <div class="skel-bar"></div>
+      <div class="skel-bar"></div>
+      <div class="skel-bar"></div>
+    </div>
 
-    <div class="results" id="results-list"></div>
+    <!-- Vote view -->
+    <div id="vote-view" style="display:none">
+      <div class="options" id="options-list" role="radiogroup" aria-labelledby="poll-question"></div>
+      <div class="loading-row" id="vote-loading">
+        <div class="spinner"></div>
+        <span>Saving your response...</span>
+      </div>
+      <button class="submit-btn" id="submit-btn" disabled onclick="submitVote()">Submit answer</button>
+      <div class="error-banner" id="vote-error"></div>
+    </div>
+
+    <!-- Results view -->
+    <div id="results-view" style="display:none">
+      <div class="results" id="results-list"></div>
+      <p class="total-note" id="total-note"></p>
+      <div class="thanks" id="thanks-msg">
+        <span class="thanks-icon" aria-hidden="true">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M2 5l2.5 2.5L8 3" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        Thanks for sharing your view!
+      </div>
+      <p class="voted-note" id="voted-note">You've already responded to this poll.</p>
+    </div>
+
+    <!-- Error view -->
+    <div id="error-view" style="display:none">
+      <div class="error-banner" id="load-error" style="display:block"></div>
+    </div>
+
   </div>
 </div>
 
+
 <script>
-let selected = null;
+(function () {
 
-document.getElementById("poll-question").textContent = POLL.question;
+  let activeIntakeId = null;
+  let selected       = null;
 
-const optionsList = document.getElementById("options-list");
-
-POLL.options.forEach((option, index) => {
-  const button = document.createElement("button");
-  button.className = "option-btn";
-  button.textContent = option;
-
-  button.addEventListener("click", () => {
-    selected = index;
-
-    document.querySelectorAll(".option-btn").forEach(btn => {
-      btn.classList.remove("selected");
-    });
-
-    button.classList.add("selected");
-    document.getElementById("submit-btn").disabled = false;
-  });
-
-  optionsList.appendChild(button);
-});
-
-function submitVote() {
-  if (selected === null) return;
-
-  const chosenOption = POLL.options[selected];
+  // ── INIT ─────────────────────────────────────────────
+  // On load: fetch active intake + existing results in one request
+  document.getElementById("poll-question").textContent = POLL.question;
+  buildOptions();
 
   fetch(SCRIPT_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      action: "vote",
-      option: chosenOption
-    })
+    body:   JSON.stringify({ action: "load" })
   })
-  .then(response => response.json())
-  .then(data => {
-    if (data.ok) {
-      renderResults(data.counts || {});
+  .then(function (r) { return r.json(); })
+  .then(function (data) {
+    if (!data.ok) {
+      showError(data.error || "Could not load poll. Please try again later.");
+      return;
+    }
+
+    activeIntakeId = data.intakeId;
+
+    // Check if this learner already voted in this intake
+    const alreadyVoted = localStorage.getItem("lms_voted_" + activeIntakeId);
+
+    if (alreadyVoted) {
+      // Show frozen results for their intake
+      renderResults(data.counts, data.total, false, alreadyVoted);
     } else {
-      alert("Could not save vote.");
+      // Show voting UI
+      hide("skeleton-view");
+      show("vote-view");
     }
   })
-  .catch(() => {
-    alert("Server connection failed.");
+  .catch(function () {
+    showError("Could not reach the server. Please check your connection and try again.");
   });
-}
 
-function renderResults(counts) {
-  const results = document.getElementById("results-list");
-  results.innerHTML = "";
-  results.style.display = "block";
 
-  let total = 0;
-  Object.values(counts).forEach(v => total += v);
+  // ── BUILD OPTIONS ────────────────────────────────────
+  function buildOptions() {
+    const list = document.getElementById("options-list");
+    POLL.options.forEach(function (opt, i) {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.setAttribute("role", "radio");
+      btn.setAttribute("aria-checked", "false");
+      btn.innerHTML =
+        '<span class="option-indicator" aria-hidden="true"></span>' +
+        '<span>' + opt + '</span>';
+      btn.addEventListener("click", function () { pick(i); });
+      list.appendChild(btn);
+    });
+  }
 
-  POLL.options.forEach(option => {
-    const votes = counts[option] || 0;
-    const percent = total ? Math.round((votes / total) * 100) : 0;
 
-    const row = document.createElement("div");
-    row.className = "result-row";
+  // ── SELECT OPTION ────────────────────────────────────
+  function pick(i) {
+    selected = i;
+    document.getElementById("options-list")
+      .querySelectorAll(".option-btn")
+      .forEach(function (b, idx) {
+        const on = idx === i;
+        b.setAttribute("aria-checked", on ? "true" : "false");
+        b.style.borderColor = on ? "var(--brand)"       : "";
+        b.style.background  = on ? "var(--brand-light)" : "";
+        const ind = b.querySelector(".option-indicator");
+        ind.style.background  = on ? "var(--brand)" : "";
+        ind.style.borderColor = on ? "var(--brand)" : "";
+        ind.innerHTML = on
+          ? '<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="3" fill="#fff"/></svg>'
+          : "";
+      });
+    document.getElementById("submit-btn").disabled = false;
+  }
 
-    row.innerHTML = `
-      <div class="result-label">
-        <span>${option}</span>
-        <span>${percent}%</span>
-      </div>
-      <div class="bar-track">
-        <div class="bar-fill" style="width:${percent}%"></div>
-      </div>
-    `;
 
-    results.appendChild(row);
-  });
-}
+  // ── SUBMIT VOTE ──────────────────────────────────────
+  window.submitVote = function () {
+    if (selected === null || !activeIntakeId) return;
+
+    const chosenOption = POLL.options[selected];
+    setVoteLoading(true);
+    hideVoteError();
+
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      body:   JSON.stringify({
+        action:   "vote",
+        intakeId: activeIntakeId,
+        option:   chosenOption
+      })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.ok) {
+        // Save vote to localStorage so returning learners see their results
+        localStorage.setItem("lms_voted_" + activeIntakeId, chosenOption);
+        renderResults(data.counts, data.total, true, chosenOption);
+      } else if (data.switched) {
+        // Intake changed while learner was on the page — reload silently
+        activeIntakeId = data.intakeId;
+        location.reload();
+      } else {
+        showVoteError(data.error || "Could not save your vote. Please try again.");
+        setVoteLoading(false);
+        resetButtons();
+      }
+    })
+    .catch(function () {
+      showVoteError("Could not reach the server. Please check your connection.");
+      setVoteLoading(false);
+      resetButtons();
+    });
+  };
+
+
+  // ── RENDER RESULTS ───────────────────────────────────
+  function renderResults(counts, total, justVoted, myAnswer) {
+    const box = document.getElementById("results-list");
+    box.innerHTML = "";
+
+    POLL.options.forEach(function (opt) {
+      const votes = (counts && counts[opt]) ? counts[opt] : 0;
+      const pct   = total > 0 ? Math.round((votes / total) * 100) : 0;
+      const mine  = opt === myAnswer;
+
+      const row = document.createElement("div");
+      row.className = "result-row";
+      row.innerHTML =
+        '<div class="result-label-row">' +
+          '<span class="result-label' + (mine ? " mine" : "") + '">' + (mine ? "✓ " : "") + opt + '</span>' +
+          '<span class="result-pct">' + pct + '%</span>' +
+        '</div>' +
+        '<div class="bar-track"><div class="bar-fill' + (mine ? " mine" : "") + '" data-pct="' + pct + '" style="width:0%"></div></div>' +
+        '<span class="result-count">' + votes + ' vote' + (votes !== 1 ? "s" : "") + '</span>';
+      box.appendChild(row);
+    });
+
+    document.getElementById("total-note").textContent =
+      total + " response" + (total !== 1 ? "s" : "") + " so far";
+    document.getElementById("thanks-msg").style.display = justVoted ? "flex"  : "none";
+    document.getElementById("voted-note").style.display = justVoted ? "none"  : "block";
+
+    hide("skeleton-view");
+    hide("vote-view");
+    show("results-view");
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        box.querySelectorAll(".bar-fill").forEach(function (b) {
+          b.style.width = b.getAttribute("data-pct") + "%";
+        });
+      });
+    });
+  }
+
+
+  // ── HELPERS ──────────────────────────────────────────
+  function show(id) { document.getElementById(id).style.display = "block"; }
+  function hide(id) { document.getElementById(id).style.display = "none"; }
+
+  function showError(msg) {
+    hide("skeleton-view");
+    hide("vote-view");
+    const el = document.getElementById("load-error");
+    el.textContent = msg;
+    show("error-view");
+  }
+
+  function showVoteError(msg) {
+    const el = document.getElementById("vote-error");
+    el.textContent   = msg;
+    el.style.display = "block";
+  }
+
+  function hideVoteError() {
+    document.getElementById("vote-error").style.display = "none";
+  }
+
+  function setVoteLoading(on) {
+    document.getElementById("vote-loading").style.display = on ? "flex" : "none";
+    document.getElementById("submit-btn").disabled = on;
+    document.getElementById("options-list")
+      .querySelectorAll(".option-btn")
+      .forEach(function (b) { b.disabled = on; });
+  }
+
+  function resetButtons() {
+    document.getElementById("options-list")
+      .querySelectorAll(".option-btn")
+      .forEach(function (b) { b.disabled = false; });
+    document.getElementById("submit-btn").disabled = (selected === null);
+  }
+
+})();
 </script>
 
 </body>
