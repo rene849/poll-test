@@ -18,38 +18,34 @@
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html, body {
-    height: 100%;
-    font-family: var(--font);
-    background: transparent;  /* no extra bg colour bleeding into Moodle */
-    color: var(--text);
-  }
+  html, body { font-family: var(--font); background: transparent; color: var(--text); }
 
   body {
     display: flex;
-    align-items: flex-start;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
     padding: 16px;
+    gap: 12px;
   }
 
-  /* ── Poll card ── */
-  .poll {
+  /* ── Shared card style ── */
+  .card {
     width: 100%;
     max-width: 600px;
     border: 1.5px solid var(--brand-mid);
     border-radius: 12px;
     overflow: hidden;
     background: var(--bg);
-    box-shadow: 0 2px 12px rgba(38, 57, 151, 0.08);
+    box-shadow: 0 2px 12px rgba(38,57,151,0.08);
   }
 
-  .poll-header {
+  .card-header {
     background: var(--brand);
     padding: 18px 24px;
   }
 
-  .poll-label {
+  .card-label {
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.08em;
@@ -58,18 +54,67 @@
     margin-bottom: 6px;
   }
 
-  .poll-question {
+  .card-title {
     font-size: 17px;
     font-weight: 600;
     color: #ffffff;
     line-height: 1.4;
   }
 
-  .poll-body {
-    padding: 20px 24px 24px;
+  .card-subtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    margin-top: 4px;
   }
 
-  /* ── Options ── */
+  .card-body { padding: 20px 24px 24px; }
+
+  /* ── Setup screen ── */
+  .setup-description {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .field-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .text-input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--brand-mid);
+    border-radius: var(--radius);
+    font-family: var(--font);
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    margin-bottom: 12px;
+  }
+
+  .text-input:focus { border-color: var(--brand); }
+
+  .error-msg {
+    font-size: 13px;
+    color: #c0392b;
+    margin-bottom: 10px;
+    min-height: 18px;
+    display: none;
+  }
+
+  /* ── Poll options ── */
   .options { display: flex; flex-direction: column; gap: 10px; }
 
   .option-btn {
@@ -89,26 +134,22 @@
     width: 100%;
   }
 
-  .option-btn:hover  { border-color: var(--brand); background: var(--brand-light); }
+  .option-btn:hover { border-color: var(--brand); background: var(--brand-light); }
   .option-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .option-indicator {
-    width: 20px;
-    height: 20px;
-    min-width: 20px;
+    width: 20px; height: 20px; min-width: 20px;
     border-radius: 50%;
     border: 2px solid var(--brand-mid);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     transition: border-color 0.15s, background 0.15s;
   }
 
   .option-btn:hover .option-indicator { border-color: var(--brand); }
 
-  /* ── Submit ── */
-  .submit-btn {
-    margin-top: 16px;
+  /* ── Buttons ── */
+  .primary-btn {
     width: 100%;
     padding: 12px;
     background: var(--brand);
@@ -120,19 +161,40 @@
     font-weight: 600;
     cursor: pointer;
     transition: background 0.15s, transform 0.1s;
+    margin-top: 14px;
   }
 
-  .submit-btn:hover   { background: var(--brand-dark); }
-  .submit-btn:active  { transform: scale(0.98); }
-  .submit-btn:disabled {
+  .primary-btn:hover   { background: var(--brand-dark); }
+  .primary-btn:active  { transform: scale(0.98); }
+  .primary-btn:disabled {
     background: var(--brand-mid);
     cursor: not-allowed;
     transform: none;
   }
 
+  /* ── Loading state ── */
+  .loading-row {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid var(--brand-mid);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   /* ── Results ── */
   .results { display: flex; flex-direction: column; gap: 14px; }
-
   .result-row { display: flex; flex-direction: column; gap: 5px; }
 
   .result-label-row {
@@ -144,75 +206,60 @@
 
   .result-label { font-size: 14px; color: var(--text); font-weight: 500; }
   .result-label.mine { color: var(--brand); font-weight: 700; }
-
   .result-pct { font-size: 13px; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
 
-  .bar-track {
-    height: 10px;
-    background: var(--brand-light);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-
-  .bar-fill {
-    height: 100%;
-    background: var(--brand-mid);
-    border-radius: 999px;
-    width: 0%;
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
+  .bar-track { height: 10px; background: var(--brand-light); border-radius: 999px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--brand-mid); border-radius: 999px; width: 0%; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
   .bar-fill.mine { background: var(--brand); }
-
   .result-count { font-size: 12px; color: var(--text-muted); }
 
-  /* ── Status messages ── */
   .thanks {
-    display: none;
-    align-items: center;
-    gap: 10px;
-    margin-top: 14px;
-    padding: 10px 14px;
-    background: var(--brand-light);
-    border-radius: var(--radius);
-    font-size: 13px;
-    color: var(--brand-dark);
-    font-weight: 500;
+    display: none; align-items: center; gap: 10px;
+    margin-top: 14px; padding: 10px 14px;
+    background: var(--brand-light); border-radius: var(--radius);
+    font-size: 13px; color: var(--brand-dark); font-weight: 500;
   }
 
   .thanks-icon {
-    width: 18px;
-    height: 18px;
-    min-width: 18px;
-    background: var(--brand);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 18px; height: 18px; min-width: 18px;
+    background: var(--brand); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
   }
 
-  .total-note  { margin-top: 10px; font-size: 12px; color: var(--text-muted); text-align: right; }
-  .voted-note  { display: none; font-size: 12px; color: var(--text-muted); margin-top: 12px; text-align: center; }
+  .total-note { margin-top: 10px; font-size: 12px; color: var(--text-muted); text-align: right; }
+  .voted-note { display: none; font-size: 12px; color: var(--text-muted); margin-top: 12px; text-align: center; }
 
-  /* ── Mobile ── */
+  /* ── Intake badge (shown after setup) ── */
+  .intake-badge {
+    font-size: 11px;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 999px;
+    display: inline-block;
+    margin-top: 6px;
+  }
+
   @media (max-width: 480px) {
     body { padding: 10px; }
-    .poll-header { padding: 14px 16px; }
-    .poll-body   { padding: 14px 16px 18px; }
-    .poll-question { font-size: 15px; }
-    .option-btn    { font-size: 14px; padding: 11px 12px; }
+    .card-header { padding: 14px 16px; }
+    .card-body { padding: 14px 16px 18px; }
+    .card-title { font-size: 15px; }
+    .option-btn { font-size: 14px; padding: 11px 12px; }
   }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════
-     POLL CONFIG — only edit this block
-     Change id, question and options per poll
-     ═══════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════
+     POLL CONFIG — edit these two things per course:
+     1. SCRIPT_URL  — your Apps Script web app URL
+     2. QUESTION + OPTIONS — the poll content
+     ═══════════════════════════════════════════════ -->
 <script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI2asjsvXhJ9RHo3GFlSbbAvRL08knfKty_iX64SHv6hwM7gix5WR2IRV0XOGpClIQ/exec";
+
 const POLL = {
-  id:       "poll_001",
   question: "Which learning format do you find most effective?",
   options: [
     "Short videos (under 5 mins)",
@@ -222,20 +269,56 @@ const POLL = {
   ]
 };
 </script>
-<!-- ═══════════════════ END CONFIG ═══════════ -->
+<!-- ══════════════ END CONFIG ═══════════════════ -->
 
-<div class="poll" role="form" aria-label="Course poll">
 
-  <div class="poll-header">
-    <div class="poll-label" aria-hidden="true">Quick Poll</div>
-    <div class="poll-question" id="poll-question"></div>
+<!-- ── SCREEN 1: Setup (admin enters intake ID) ── -->
+<div class="card" id="setup-screen" style="display:none">
+  <div class="card-header">
+    <div class="card-label">Admin setup</div>
+    <div class="card-title">New intake — set up this poll</div>
+    <div class="card-subtitle">This only appears once per device before go-live</div>
   </div>
+  <div class="card-body">
+    <p class="setup-description">
+      Enter a name for this intake. This becomes the tab name in the Google Sheet
+      where all responses for this cohort are stored.
+    </p>
+    <label class="field-label" for="intake-input">Intake name</label>
+    <p class="field-hint">Use something clear — e.g. Jun2026, Cohort3, Jan2027</p>
+    <input
+      class="text-input"
+      type="text"
+      id="intake-input"
+      placeholder="e.g. Jun2026"
+      maxlength="50"
+    />
+    <div class="error-msg" id="setup-error">Please enter an intake name.</div>
+    <div class="loading-row" id="setup-loading">
+      <div class="spinner"></div>
+      <span>Creating intake in Google Sheet...</span>
+    </div>
+    <button class="primary-btn" onclick="confirmSetup()">Confirm and go live</button>
+  </div>
+</div>
 
-  <div class="poll-body">
+
+<!-- ── SCREEN 2: Poll (learner votes) ── -->
+<div class="card" id="poll-screen" style="display:none">
+  <div class="card-header">
+    <div class="card-label">Quick poll</div>
+    <div class="card-title" id="poll-question"></div>
+    <div class="intake-badge" id="intake-badge"></div>
+  </div>
+  <div class="card-body">
 
     <div id="vote-view">
       <div class="options" id="options-list" role="radiogroup" aria-labelledby="poll-question"></div>
-      <button class="submit-btn" id="submit-btn" disabled onclick="submitVote()">Submit answer</button>
+      <div class="loading-row" id="vote-loading">
+        <div class="spinner"></div>
+        <span>Saving your response...</span>
+      </div>
+      <button class="primary-btn" id="submit-btn" disabled onclick="submitVote()">Submit answer</button>
     </div>
 
     <div id="results-view" style="display:none">
@@ -255,79 +338,197 @@ const POLL = {
   </div>
 </div>
 
+
 <script>
 (function () {
-  const KEY = "lms_poll_" + POLL.id;
-  let selected = null;
 
-  function getData() {
-    try {
-      const r = localStorage.getItem(KEY);
-      return r ? JSON.parse(r) : { votes: new Array(POLL.options.length).fill(0), myVote: null };
-    } catch { return { votes: new Array(POLL.options.length).fill(0), myVote: null }; }
+  const LS_INTAKE  = "lms_intake_id";
+  const LS_VOTED   = "lms_poll_voted_";
+  let   intakeId   = null;
+  let   selected   = null;
+
+  // ── INIT ──────────────────────────────────────────────
+  // Check if intake ID is already saved
+  // If yes → show poll. If no → show setup screen.
+  function init() {
+    const saved = localStorage.getItem(LS_INTAKE);
+    if (saved) {
+      intakeId = saved;
+      showPoll();
+    } else {
+      show("setup-screen");
+    }
   }
 
-  function saveData(d) {
-    try { localStorage.setItem(KEY, JSON.stringify(d)); } catch {}
+  // ── SETUP ─────────────────────────────────────────────
+  window.confirmSetup = function () {
+    const val = document.getElementById("intake-input").value.trim();
+    const err = document.getElementById("setup-error");
+
+    if (!val) {
+      err.style.display = "block";
+      err.textContent   = "Please enter an intake name.";
+      return;
+    }
+
+    // Sanitise: letters, numbers, hyphens and underscores only
+    const clean = val.replace(/[^a-zA-Z0-9_\-]/g, "").substring(0, 50);
+    if (!clean) {
+      err.style.display = "block";
+      err.textContent   = "Please use letters, numbers, hyphens or underscores only.";
+      return;
+    }
+
+    err.style.display = "none";
+    setLoading("setup-loading", true);
+    document.querySelector("#setup-screen .primary-btn").disabled = true;
+
+    // Tell Apps Script to create the tab in the Sheet
+    fetch(SCRIPT_URL, {
+      method:  "POST",
+      body:    JSON.stringify({ action: "setup", intakeId: clean })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        localStorage.setItem(LS_INTAKE, clean);
+        intakeId = clean;
+        showPoll();
+      } else {
+        showSetupError("Could not create intake: " + (data.error || "unknown error"));
+      }
+    })
+    .catch(function() {
+      showSetupError("Could not reach the server. Check your connection and try again.");
+    })
+    .finally(function() {
+      setLoading("setup-loading", false);
+      document.querySelector("#setup-screen .primary-btn").disabled = false;
+    });
+  };
+
+  function showSetupError(msg) {
+    const err = document.getElementById("setup-error");
+    err.style.display = "block";
+    err.textContent   = msg;
   }
 
-  // Render question
-  document.getElementById("poll-question").textContent = POLL.question;
+  // ── SHOW POLL ─────────────────────────────────────────
+  function showPoll() {
+    document.getElementById("poll-question").textContent  = POLL.question;
+    document.getElementById("intake-badge").textContent   = intakeId;
 
-  // Render options
-  const list = document.getElementById("options-list");
-  POLL.options.forEach(function (opt, i) {
-    const btn = document.createElement("button");
-    btn.className = "option-btn";
-    btn.setAttribute("role", "radio");
-    btn.setAttribute("aria-checked", "false");
-    btn.innerHTML =
-      '<span class="option-indicator" aria-hidden="true"></span>' +
-      '<span>' + opt + '</span>';
-    btn.addEventListener("click", function () { pick(i); });
-    list.appendChild(btn);
-  });
+    // Build option buttons
+    const list = document.getElementById("options-list");
+    list.innerHTML = "";
+    POLL.options.forEach(function (opt, i) {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.setAttribute("role", "radio");
+      btn.setAttribute("aria-checked", "false");
+      btn.innerHTML =
+        '<span class="option-indicator" aria-hidden="true"></span>' +
+        '<span>' + opt + '</span>';
+      btn.addEventListener("click", function () { pick(i); });
+      list.appendChild(btn);
+    });
 
+    show("poll-screen");
+
+    // If already voted on this device, go straight to results
+    if (localStorage.getItem(LS_VOTED + intakeId)) {
+      loadResults(false);
+    }
+  }
+
+  // ── SELECT OPTION ─────────────────────────────────────
   function pick(i) {
     selected = i;
-    list.querySelectorAll(".option-btn").forEach(function (b, idx) {
-      const on = idx === i;
-      b.setAttribute("aria-checked", on ? "true" : "false");
-      b.style.borderColor = on ? "var(--brand)"       : "";
-      b.style.background  = on ? "var(--brand-light)" : "";
-      const ind = b.querySelector(".option-indicator");
-      ind.style.background  = on ? "var(--brand)" : "";
-      ind.style.borderColor = on ? "var(--brand)" : "";
-      ind.innerHTML = on
-        ? '<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="3" fill="#fff"/></svg>'
-        : "";
-    });
+    document.getElementById("options-list")
+      .querySelectorAll(".option-btn")
+      .forEach(function (b, idx) {
+        const on = idx === i;
+        b.setAttribute("aria-checked", on ? "true" : "false");
+        b.style.borderColor = on ? "var(--brand)"       : "";
+        b.style.background  = on ? "var(--brand-light)" : "";
+        const ind = b.querySelector(".option-indicator");
+        ind.style.background  = on ? "var(--brand)" : "";
+        ind.style.borderColor = on ? "var(--brand)" : "";
+        ind.innerHTML = on
+          ? '<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="3" fill="#fff"/></svg>'
+          : "";
+      });
     document.getElementById("submit-btn").disabled = false;
   }
 
+  // ── SUBMIT VOTE ───────────────────────────────────────
   window.submitVote = function () {
     if (selected === null) return;
-    const d = getData();
-    if (d.myVote !== null) { showResults(false); return; }
-    d.votes[selected]++;
-    d.myVote = selected;
-    saveData(d);
-    showResults(true);
+
+    const chosenOption = POLL.options[selected];
+    setLoading("vote-loading", true);
+    document.getElementById("submit-btn").disabled = true;
+    document.querySelectorAll(".option-btn").forEach(function(b) { b.disabled = true; });
+
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      body:   JSON.stringify({
+        action:   "vote",
+        intakeId: intakeId,
+        option:   chosenOption
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        // Remember this device voted for this intake
+        localStorage.setItem(LS_VOTED + intakeId, chosenOption);
+        loadResults(true);
+      } else {
+        alert("Could not save your vote. Please try again.");
+        document.querySelectorAll(".option-btn").forEach(function(b) { b.disabled = false; });
+        document.getElementById("submit-btn").disabled = false;
+      }
+    })
+    .catch(function() {
+      alert("Could not reach the server. Please check your connection.");
+      document.querySelectorAll(".option-btn").forEach(function(b) { b.disabled = false; });
+      document.getElementById("submit-btn").disabled = false;
+    })
+    .finally(function() {
+      setLoading("vote-loading", false);
+    });
   };
 
-  function showResults(justVoted) {
-    document.getElementById("vote-view").style.display    = "none";
-    document.getElementById("results-view").style.display = "block";
+  // ── LOAD & SHOW RESULTS ───────────────────────────────
+  function loadResults(justVoted) {
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      body:   JSON.stringify({ action: "results", intakeId: intakeId })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        renderResults(data.counts, data.total, justVoted);
+      }
+    })
+    .catch(function() {
+      // If results fail to load just show a thank you
+      renderResults({}, 0, justVoted);
+    });
+  }
 
-    const d      = getData();
-    const total  = d.votes.reduce(function (a, b) { return a + b; }, 0);
-    const box    = document.getElementById("results-list");
-    box.innerHTML = "";
+  function renderResults(counts, total, justVoted) {
+    const myAnswer = localStorage.getItem(LS_VOTED + intakeId);
+    const box      = document.getElementById("results-list");
+    box.innerHTML  = "";
 
-    POLL.options.forEach(function (opt, i) {
-      const pct  = total > 0 ? Math.round((d.votes[i] / total) * 100) : 0;
-      const mine = i === d.myVote;
-      const row  = document.createElement("div");
+    POLL.options.forEach(function (opt) {
+      const votes = (counts && counts[opt]) ? counts[opt] : 0;
+      const pct   = total > 0 ? Math.round((votes / total) * 100) : 0;
+      const mine  = opt === myAnswer;
+
+      const row = document.createElement("div");
       row.className = "result-row";
       row.innerHTML =
         '<div class="result-label-row">' +
@@ -335,14 +536,17 @@ const POLL = {
           '<span class="result-pct">' + pct + '%</span>' +
         '</div>' +
         '<div class="bar-track"><div class="bar-fill' + (mine ? " mine" : "") + '" data-pct="' + pct + '" style="width:0%"></div></div>' +
-        '<span class="result-count">' + d.votes[i] + ' vote' + (d.votes[i] !== 1 ? "s" : "") + '</span>';
+        '<span class="result-count">' + votes + ' vote' + (votes !== 1 ? "s" : "") + '</span>';
       box.appendChild(row);
     });
 
     document.getElementById("total-note").textContent =
       total + " response" + (total !== 1 ? "s" : "") + " so far";
-    document.getElementById("thanks-msg").style.display = justVoted ? "flex" : "none";
-    document.getElementById("voted-note").style.display = justVoted ? "none" : "block";
+    document.getElementById("thanks-msg").style.display  = justVoted ? "flex"  : "none";
+    document.getElementById("voted-note").style.display  = justVoted ? "none"  : "block";
+
+    document.getElementById("vote-view").style.display    = "none";
+    document.getElementById("results-view").style.display = "block";
 
     // Animate bars
     requestAnimationFrame(function () {
@@ -354,8 +558,19 @@ const POLL = {
     });
   }
 
-  // Auto-show results if already voted
-  if (getData().myVote !== null) showResults(false);
+  // ── HELPERS ───────────────────────────────────────────
+  function show(id) {
+    ["setup-screen", "poll-screen"].forEach(function(s) {
+      document.getElementById(s).style.display = s === id ? "block" : "none";
+    });
+  }
+
+  function setLoading(id, on) {
+    document.getElementById(id).style.display = on ? "flex" : "none";
+  }
+
+  // ── START ─────────────────────────────────────────────
+  init();
 
 })();
 </script>
