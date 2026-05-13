@@ -51,12 +51,8 @@
   .poll-question { font-size: 17px; font-weight: 600; color: #ffffff; line-height: 1.4; }
   .poll-body { padding: 20px 24px 24px; }
 
-  /* ── Loading skeleton ── */
-  .skeleton {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
+  /* ── Skeleton loader ── */
+  .skeleton { display: flex; flex-direction: column; gap: 10px; }
 
   .skel-bar {
     height: 46px;
@@ -109,7 +105,7 @@
 
   .option-btn:hover .option-indicator { border-color: var(--brand); }
 
-  /* ── Submit / loading ── */
+  /* ── Submit ── */
   .submit-btn {
     margin-top: 16px; width: 100%; padding: 12px;
     background: var(--brand); color: #fff; border: none;
@@ -166,15 +162,11 @@
   .total-note { margin-top: 10px; font-size: 12px; color: var(--text-muted); text-align: right; }
   .voted-note { display: none; font-size: 12px; color: var(--text-muted); margin-top: 12px; text-align: center; }
 
-  /* ── Error banner ── */
   .error-banner {
-    display: none;
-    padding: 12px 14px;
-    background: #fdf3f2;
-    border: 1.5px solid #e8b4b0;
-    border-radius: var(--radius);
-    font-size: 13px; color: #7a2020;
-    margin-top: 12px; line-height: 1.5;
+    display: none; padding: 12px 14px;
+    background: #fdf3f2; border: 1.5px solid #e8b4b0;
+    border-radius: var(--radius); font-size: 13px;
+    color: #7a2020; margin-top: 12px; line-height: 1.5;
   }
 
   @media (max-width: 480px) {
@@ -190,13 +182,13 @@
 
 <!-- ═══════════════════════════════════════════════════════
      POLL CONFIG
-     This is the ONLY thing that ever needs editing.
-     Update SCRIPT_URL once when you first deploy.
-     Update QUESTION + OPTIONS only if the poll changes.
+     Only ever edit SCRIPT_URL and POLL question/options.
 
-     The intake ID is now managed entirely from the
-     Google Sheet via Poll Admin menu — no code changes
-     needed between intakes.
+     INTAKE and USER ID come from the iframe URL:
+       poll.html?intake=Jun2026&uid=%%userid%%
+
+     Moodle replaces %%userid%% automatically.
+     The script handles everything else.
      ═══════════════════════════════════════════════════════ -->
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI2asjsvXhJ9RHo3GFlSbbAvRL08knfKty_iX64SHv6hwM7gix5WR2IRV0XOGpClIQ/exec";
@@ -221,7 +213,6 @@ const POLL = {
   </div>
   <div class="poll-body">
 
-    <!-- Skeleton shown while loading -->
     <div id="skeleton-view" class="skeleton">
       <div class="skel-bar"></div>
       <div class="skel-bar"></div>
@@ -229,7 +220,6 @@ const POLL = {
       <div class="skel-bar"></div>
     </div>
 
-    <!-- Vote view -->
     <div id="vote-view" style="display:none">
       <div class="options" id="options-list" role="radiogroup" aria-labelledby="poll-question"></div>
       <div class="loading-row" id="vote-loading">
@@ -240,14 +230,14 @@ const POLL = {
       <div class="error-banner" id="vote-error"></div>
     </div>
 
-    <!-- Results view -->
     <div id="results-view" style="display:none">
       <div class="results" id="results-list"></div>
       <p class="total-note" id="total-note"></p>
       <div class="thanks" id="thanks-msg">
         <span class="thanks-icon" aria-hidden="true">
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 5l2.5 2.5L8 3" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 5l2.5 2.5L8 3" stroke="#fff" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </span>
         Thanks for sharing your view!
@@ -255,7 +245,6 @@ const POLL = {
       <p class="voted-note" id="voted-note">You've already responded to this poll.</p>
     </div>
 
-    <!-- Error view -->
     <div id="error-view" style="display:none">
       <div class="error-banner" id="load-error" style="display:block"></div>
     </div>
@@ -267,72 +256,76 @@ const POLL = {
 <script>
 (function () {
 
-  let activeIntakeId = null;
-  let selected       = null;
+  // ── READ URL PARAMS ───────────────────────────────────
+  // intake and uid come from the iframe URL set by Moodle
+  var params   = new URLSearchParams(window.location.search);
+  var intakeId = params.get("intake") || null;
+  var uid      = params.get("uid")    || null;
+  var selected = null;
 
-  // ── INIT ─────────────────────────────────────────────
-  // On load: fetch active intake + existing results in one request
+  // ── INIT ──────────────────────────────────────────────
   document.getElementById("poll-question").textContent = POLL.question;
   buildOptions();
 
+  if (!intakeId) {
+    showLoadError("Poll configuration error — no intake ID found in URL. Please contact your administrator.");
+    return;
+  }
+
+  // Ask script to load poll — passes intake + uid in one request
+  // Script checks if user already voted and returns results if so
   fetch(SCRIPT_URL, {
     method: "POST",
-    body:   JSON.stringify({ action: "load" })
+    body:   JSON.stringify({ action: "load", intakeId: intakeId, uid: uid })
   })
-  .then(function (r) { return r.json(); })
-  .then(function (data) {
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
     if (!data.ok) {
-      showError(data.error || "Could not load poll. Please try again later.");
+      showLoadError(data.error || "Could not load poll. Please try again later.");
       return;
     }
-
-    activeIntakeId = data.intakeId;
-
-    // Check if this learner already voted in this intake
-    const alreadyVoted = localStorage.getItem("lms_voted_" + activeIntakeId);
-
-    if (alreadyVoted) {
-      // Show frozen results for their intake
-      renderResults(data.counts, data.total, false, alreadyVoted);
+    if (data.voted) {
+      // User already voted — show their frozen results immediately
+      renderResults(data.counts, data.total, false, data.answer);
     } else {
-      // Show voting UI
+      // New voter — show the poll
       hide("skeleton-view");
       show("vote-view");
     }
   })
-  .catch(function () {
-    showError("Could not reach the server. Please check your connection and try again.");
+  .catch(function() {
+    showLoadError("Could not reach the server. Please check your connection.");
   });
 
 
-  // ── BUILD OPTIONS ────────────────────────────────────
+  // ── BUILD OPTIONS ─────────────────────────────────────
   function buildOptions() {
-    const list = document.getElementById("options-list");
-    POLL.options.forEach(function (opt, i) {
-      const btn = document.createElement("button");
+    var list = document.getElementById("options-list");
+    POLL.options.forEach(function(opt, i) {
+      var btn = document.createElement("button");
       btn.className = "option-btn";
       btn.setAttribute("role", "radio");
       btn.setAttribute("aria-checked", "false");
       btn.innerHTML =
         '<span class="option-indicator" aria-hidden="true"></span>' +
         '<span>' + opt + '</span>';
-      btn.addEventListener("click", function () { pick(i); });
+      btn.addEventListener("click", function() { pick(i); });
       list.appendChild(btn);
     });
   }
 
 
-  // ── SELECT OPTION ────────────────────────────────────
+  // ── SELECT OPTION ─────────────────────────────────────
   function pick(i) {
     selected = i;
     document.getElementById("options-list")
       .querySelectorAll(".option-btn")
-      .forEach(function (b, idx) {
-        const on = idx === i;
+      .forEach(function(b, idx) {
+        var on = idx === i;
         b.setAttribute("aria-checked", on ? "true" : "false");
         b.style.borderColor = on ? "var(--brand)"       : "";
         b.style.background  = on ? "var(--brand-light)" : "";
-        const ind = b.querySelector(".option-indicator");
+        var ind = b.querySelector(".option-indicator");
         ind.style.background  = on ? "var(--brand)" : "";
         ind.style.borderColor = on ? "var(--brand)" : "";
         ind.innerHTML = on
@@ -343,11 +336,11 @@ const POLL = {
   }
 
 
-  // ── SUBMIT VOTE ──────────────────────────────────────
-  window.submitVote = function () {
-    if (selected === null || !activeIntakeId) return;
+  // ── SUBMIT VOTE ───────────────────────────────────────
+  window.submitVote = function() {
+    if (selected === null) return;
 
-    const chosenOption = POLL.options[selected];
+    var chosenOption = POLL.options[selected];
     setVoteLoading(true);
     hideVoteError();
 
@@ -355,27 +348,22 @@ const POLL = {
       method: "POST",
       body:   JSON.stringify({
         action:   "vote",
-        intakeId: activeIntakeId,
-        option:   chosenOption
+        intakeId: intakeId,
+        option:   chosenOption,
+        uid:      uid
       })
     })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
       if (data.ok) {
-        // Save vote to localStorage so returning learners see their results
-        localStorage.setItem("lms_voted_" + activeIntakeId, chosenOption);
-        renderResults(data.counts, data.total, true, chosenOption);
-      } else if (data.switched) {
-        // Intake changed while learner was on the page — reload silently
-        activeIntakeId = data.intakeId;
-        location.reload();
+        renderResults(data.counts, data.total, !data.already, chosenOption);
       } else {
         showVoteError(data.error || "Could not save your vote. Please try again.");
         setVoteLoading(false);
         resetButtons();
       }
     })
-    .catch(function () {
+    .catch(function() {
       showVoteError("Could not reach the server. Please check your connection.");
       setVoteLoading(false);
       resetButtons();
@@ -383,24 +371,28 @@ const POLL = {
   };
 
 
-  // ── RENDER RESULTS ───────────────────────────────────
+  // ── RENDER RESULTS ────────────────────────────────────
   function renderResults(counts, total, justVoted, myAnswer) {
-    const box = document.getElementById("results-list");
+    var box = document.getElementById("results-list");
     box.innerHTML = "";
 
-    POLL.options.forEach(function (opt) {
-      const votes = (counts && counts[opt]) ? counts[opt] : 0;
-      const pct   = total > 0 ? Math.round((votes / total) * 100) : 0;
-      const mine  = opt === myAnswer;
+    POLL.options.forEach(function(opt) {
+      var votes = (counts && counts[opt]) ? counts[opt] : 0;
+      var pct   = total > 0 ? Math.round((votes / total) * 100) : 0;
+      var mine  = opt === myAnswer;
 
-      const row = document.createElement("div");
+      var row = document.createElement("div");
       row.className = "result-row";
       row.innerHTML =
         '<div class="result-label-row">' +
-          '<span class="result-label' + (mine ? " mine" : "") + '">' + (mine ? "✓ " : "") + opt + '</span>' +
+          '<span class="result-label' + (mine ? " mine" : "") + '">' +
+            (mine ? "✓ " : "") + opt +
+          '</span>' +
           '<span class="result-pct">' + pct + '%</span>' +
         '</div>' +
-        '<div class="bar-track"><div class="bar-fill' + (mine ? " mine" : "") + '" data-pct="' + pct + '" style="width:0%"></div></div>' +
+        '<div class="bar-track">' +
+          '<div class="bar-fill' + (mine ? " mine" : "") + '" data-pct="' + pct + '" style="width:0%"></div>' +
+        '</div>' +
         '<span class="result-count">' + votes + ' vote' + (votes !== 1 ? "s" : "") + '</span>';
       box.appendChild(row);
     });
@@ -414,9 +406,9 @@ const POLL = {
     hide("vote-view");
     show("results-view");
 
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        box.querySelectorAll(".bar-fill").forEach(function (b) {
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        box.querySelectorAll(".bar-fill").forEach(function(b) {
           b.style.width = b.getAttribute("data-pct") + "%";
         });
       });
@@ -424,20 +416,19 @@ const POLL = {
   }
 
 
-  // ── HELPERS ──────────────────────────────────────────
+  // ── HELPERS ───────────────────────────────────────────
   function show(id) { document.getElementById(id).style.display = "block"; }
-  function hide(id) { document.getElementById(id).style.display = "none"; }
+  function hide(id) { document.getElementById(id).style.display = "none";  }
 
-  function showError(msg) {
+  function showLoadError(msg) {
     hide("skeleton-view");
     hide("vote-view");
-    const el = document.getElementById("load-error");
-    el.textContent = msg;
+    document.getElementById("load-error").textContent = msg;
     show("error-view");
   }
 
   function showVoteError(msg) {
-    const el = document.getElementById("vote-error");
+    var el = document.getElementById("vote-error");
     el.textContent   = msg;
     el.style.display = "block";
   }
@@ -451,13 +442,13 @@ const POLL = {
     document.getElementById("submit-btn").disabled = on;
     document.getElementById("options-list")
       .querySelectorAll(".option-btn")
-      .forEach(function (b) { b.disabled = on; });
+      .forEach(function(b) { b.disabled = on; });
   }
 
   function resetButtons() {
     document.getElementById("options-list")
       .querySelectorAll(".option-btn")
-      .forEach(function (b) { b.disabled = false; });
+      .forEach(function(b) { b.disabled = false; });
     document.getElementById("submit-btn").disabled = (selected === null);
   }
 
