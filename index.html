@@ -6,9 +6,9 @@
 <title>Poll</title>
 <style>
   :root {
-    --brand:       #263997; /* The blue fill color */
-    --bar-bg:      rgb(246, 215, 201); /* Your requested background color */
-    --text:        #0d0d0d; /* Your requested text color */
+    --brand:       #2E45B8; /* Chicago 45 Purple */
+    --bar-bg:      rgb(246, 215, 201); 
+    --text:        #0d0d0d; 
     --text-muted:  #555555;
     --bg:          #ffffff;
     --radius:      4px;
@@ -18,25 +18,18 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { font-family: var(--font); background: transparent; color: var(--text); }
 
-  body {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 16px;
-  }
+  body { display: flex; align-items: flex-start; justify-content: center; padding: 16px; }
 
   .poll {
     width: 100%;
     max-width: 600px;
     border: 1px solid #ddd;
     border-radius: 8px;
-    overflow: hidden;
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 30px;
   }
 
-  /* Header removed, title is now part of the body */
   .poll-question { 
     font-size: 19px; 
     font-weight: 500; 
@@ -45,25 +38,25 @@
     margin-bottom: 24px;
   }
 
-  /* ── Options (Voting View) ── */
-  .options { display: flex; flex-direction: column; gap: 10px; }
-
-  .option-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    border: 1px solid #ddd;
+  /* ── Skeleton loader (Perceived Speed) ── */
+  .skeleton-bar {
+    height: 80px;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    margin-bottom: 15px;
     border-radius: var(--radius);
-    background: var(--bg);
-    cursor: pointer;
-    font-family: var(--font);
-    font-size: 15px;
-    color: var(--text);
-    width: 100%;
-    transition: background 0.15s;
+    animation: pulse 1.5s infinite;
   }
+  @keyframes pulse { 50% { opacity: 0.5; } }
 
+  /* ── Options View ── */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn {
+    display: flex; align-items: center; padding: 14px 16px;
+    border: 1px solid #ddd; border-radius: var(--radius);
+    background: var(--bg); cursor: pointer; font-size: 15px;
+    color: var(--text); width: 100%; transition: 0.15s;
+  }
   .option-btn:hover { background: #f9f9f9; border-color: var(--brand); }
 
   .submit-btn {
@@ -75,58 +68,16 @@
 
   /* ── Results View ── */
   .results { display: flex; flex-direction: column; gap: 15px; }
-  
-  .result-row { 
-    display: flex; 
-    flex-direction: column; 
-    border: 1px solid #e0e0e0; 
-    padding: 15px;
-  }
-
-  .result-label { 
-    font-size: 16px; 
-    color: var(--text); 
-    font-weight: 500;
-    padding-bottom: 0.5rem; /* Your requested padding */
-  }
-
-  .bar-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  .bar-track { 
-    flex-grow: 1;
-    height: 40px; 
-    background: var(--bar-bg); /* Your requested RGB background */
-    position: relative;
-  }
-
+  .result-row { border: 1px solid #e0e0e0; padding: 15px; display: flex; flex-direction: column; }
+  .result-label { font-size: 16px; font-weight: 500; padding-bottom: 0.5rem; }
+  .bar-container { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .bar-track { flex-grow: 1; height: 40px; background: var(--bar-bg); position: relative; }
   .bar-fill { 
-    height: 100%; 
-    background: var(--brand); 
-    width: 0%; 
-    transition: width 0.8s ease-out;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
+    height: 100%; background: var(--brand); width: 0%; 
+    transition: width 0.8s ease-out; display: flex; align-items: center; justify-content: flex-end; 
   }
-
-  .inner-number {
-    color: white;
-    font-size: 14px;
-    padding-right: 0.5rem; /* Your requested padding */
-  }
-
-  .result-pct { 
-    font-size: 16px; 
-    color: var(--text); 
-    min-width: 45px;
-    text-align: right;
-  }
-
+  .inner-number { color: white; font-size: 14px; padding-right: 0.5rem; }
+  .result-pct { font-size: 16px; min-width: 45px; text-align: right; }
   .total-note { margin-top: 20px; font-size: 12px; color: var(--text-muted); text-align: right; }
 </style>
 </head>
@@ -142,10 +93,13 @@ const POLL = {
 </script>
 
 <div class="poll">
-  <div class="poll-question" id="poll-question"></div>
+  <div class="poll-question">Would you rather have a hearty greeting or a cordial one?</div>
   
   <div class="poll-body">
-    <div id="skeleton-view">Loading...</div>
+    <div id="skeleton-view">
+      <div class="skeleton-bar"></div>
+      <div class="skeleton-bar"></div>
+    </div>
 
     <div id="vote-view" style="display:none">
       <div class="options" id="options-list"></div>
@@ -166,9 +120,9 @@ const POLL = {
   var uid = params.get("uid") || "user";
   var selected = null;
 
-  document.getElementById("poll-question").textContent = POLL.question;
   buildOptions();
 
+  // Load call
   fetch(SCRIPT_URL, {
     method: "POST",
     body: JSON.stringify({ action: "load", intakeId: intakeId, uid: uid })
@@ -177,13 +131,15 @@ const POLL = {
   .then(data => {
     document.getElementById("skeleton-view").style.display = "none";
     if (data.voted) {
-      renderResults(data.counts, data.total, false, data.answer);
+      renderResults(data.counts, data.total || 0, false, data.answer);
     } else {
       document.getElementById("vote-view").style.display = "block";
     }
   })
   .catch(() => {
-    document.getElementById("skeleton-view").textContent = "Error loading poll.";
+    // If it fails, we at least show the voting options so the user can try anyway
+    document.getElementById("skeleton-view").style.display = "none";
+    document.getElementById("vote-view").style.display = "block";
   });
 
   function buildOptions() {
@@ -213,16 +169,17 @@ const POLL = {
       body: JSON.stringify({ action: "vote", intakeId: intakeId, option: POLL.options[selected], uid: uid })
     })
     .then(r => r.json())
-    .then(data => renderResults(data.counts, data.total, true, POLL.options[selected]));
+    .then(data => renderResults(data.counts, data.total || 0, true, POLL.options[selected]));
   };
 
   function renderResults(counts, total, justVoted, myAnswer) {
     var box = document.getElementById("results-list");
     box.innerHTML = "";
+    var safeTotal = total || 0;
 
     POLL.options.forEach(opt => {
       var votes = (counts && counts[opt]) ? counts[opt] : 0;
-      var pct = total > 0 ? Math.round((votes / total) * 100) : 0;
+      var pct = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
 
       var row = document.createElement("div");
       row.className = "result-row";
@@ -240,7 +197,8 @@ const POLL = {
       box.appendChild(row);
     });
 
-    document.getElementById("total-note").textContent = total + " responses so far";
+    document.getElementById("total-note").textContent = safeTotal + " responses so far";
+    document.getElementById("skeleton-view").style.display = "none";
     document.getElementById("vote-view").style.display = "none";
     document.getElementById("results-view").style.display = "block";
   }
