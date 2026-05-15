@@ -6,8 +6,8 @@
 <title>Poll</title>
 <style>
   :root {
-    --brand:       #2E45B8; /* Chicago 45 */
-    --bar-bg:      #ebedfa; /* Chicago 95 */
+    --brand:       #2E45B8;
+    --bar-bg:      #ebedfa;
     --text:        #0d0d0d;
     --text-muted:  #555555;
     --bg:          #ffffff;
@@ -17,24 +17,19 @@
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { font-family: var(--font); background: transparent; color: var(--text); }
-
   body { display: flex; align-items: flex-start; justify-content: center; padding: 16px; }
 
   .poll {
-    width: 100%;
-    max-width: 600px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+    width: 100%; max-width: 600px;
+    border: 1px solid #ddd; border-radius: 8px;
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 30px;
   }
 
   .poll-question {
-    font-size: 19px;
-    font-weight: 600;
-    color: var(--text);
-    line-height: 1.4;
+    font-size: 19px; font-weight: 600;
+    color: var(--text); line-height: 1.4;
     margin-bottom: 24px;
   }
 
@@ -49,7 +44,7 @@
     font-family: var(--font);
   }
 
-  .option-btn:hover { background: #f9f9f9; border-color: var(--brand); }
+  .option-btn:hover  { background: #f9f9f9; border-color: var(--brand); }
   .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .submit-btn {
@@ -60,120 +55,90 @@
     transition: opacity 0.2s, background 0.15s;
   }
 
-  .submit-btn:hover   { background: #1a2a6e; }
+  .submit-btn:hover    { background: #1a2a6e; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* ── Error ── */
   .error-banner {
     padding: 10px 14px;
-    background: #fdf3f2;
-    border: 1px solid #e8b4b0;
-    border-radius: var(--radius);
-    font-size: 13px;
-    color: #7a2020;
-    line-height: 1.5;
-    margin-top: 10px;
+    background: #fdf3f2; border: 1px solid #e8b4b0;
+    border-radius: var(--radius); font-size: 13px;
+    color: #7a2020; line-height: 1.5; margin-top: 10px;
   }
 
   /* ── Results ── */
   .results { display: flex; flex-direction: column; gap: 15px; }
 
   .result-row {
-    border: 1px solid #e0e0e0;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
+    border: 1px solid #e0e0e0; padding: 15px;
+    display: flex; flex-direction: column;
   }
 
   .result-label {
-    font-size: 16px;
-    font-weight: 500;
-    padding-bottom: 0.5rem;
-    color: var(--text);
+    font-size: 16px; font-weight: 500;
+    padding-bottom: 0.5rem; color: var(--text);
   }
 
-  .result-label.mine {
-    color: var(--brand);
-    font-weight: 700;
-  }
+  .result-label.mine { color: var(--brand); font-weight: 700; }
 
   .bar-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 12px;
   }
 
   .bar-track {
-    flex-grow: 1;
-    height: 40px;
-    background: var(--bar-bg);
-    position: relative;
+    flex-grow: 1; height: 40px;
+    background: var(--bar-bg); position: relative;
   }
 
   .bar-fill {
-    height: 100%;
-    background: var(--brand);
-    width: 0%;
-    transition: width 0.6s cubic-bezier(0.1, 0.5, 0.5, 1);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    min-width: 32px;
+    height: 100%; background: var(--brand);
+    width: 0%; transition: width 0.6s cubic-bezier(0.1,0.5,0.5,1);
+    display: flex; align-items: center;
+    justify-content: flex-end; min-width: 32px;
   }
 
   .inner-number {
-    color: white;
-    font-size: 14px;
-    padding-right: 0.5rem;
+    color: white; font-size: 14px; padding-right: 0.5rem;
   }
 
   .result-pct {
-    font-size: 16px;
-    min-width: 45px;
-    text-align: right;
-    font-weight: 500;
-    color: var(--text);
+    font-size: 16px; min-width: 45px;
+    text-align: right; font-weight: 500; color: var(--text);
   }
 
   .total-note {
-    margin-top: 20px;
-    font-size: 12px;
-    color: var(--text-muted);
-    text-align: right;
+    margin-top: 20px; font-size: 12px;
+    color: var(--text-muted); text-align: right;
   }
 
   .voted-note {
-    margin-top: 12px;
-    font-size: 12px;
-    color: var(--text-muted);
-    text-align: center;
+    margin-top: 12px; font-size: 12px;
+    color: var(--text-muted); text-align: center;
   }
 
   .thanks {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 12px;
-    padding: 10px 12px;
-    background: var(--bar-bg);
-    border-radius: var(--radius);
-    font-size: 13px;
-    color: var(--brand);
-    font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 12px; padding: 10px 12px;
+    background: var(--bar-bg); border-radius: var(--radius);
+    font-size: 13px; color: var(--brand); font-weight: 500;
   }
 
   /* ── Skeleton ── */
   .skeleton-bar {
-    height: 80px;
-    background: #f9f9f9;
-    border: 1px solid #eee;
-    margin-bottom: 15px;
-    animation: pulse 1.5s infinite;
-    border-radius: var(--radius);
+    height: 80px; background: #f9f9f9;
+    border: 1px solid #eee; margin-bottom: 15px;
+    animation: pulse 1.5s infinite; border-radius: var(--radius);
   }
 
   @keyframes pulse { 50% { opacity: 0.5; } }
+
+  /* ── Waiting for ID notice ── */
+  .waiting-notice {
+    font-size: 13px; color: var(--text-muted);
+    text-align: center; padding: 8px 0;
+    display: none;
+  }
 
   @media (max-width: 480px) {
     .poll { padding: 20px; }
@@ -190,10 +155,14 @@
      1. SCRIPT_URL — set once, never changes
      2. POLL question + options — only if content changes
 
-     USER ID is read automatically from Moodle parent window
-     INTAKE comes from the iframe URL: ?intake=Jun2026
+     USER ID sources (in priority order):
+     1. postMessage from Moodle parent (via Additional HTML script)
+     2. ?uid= URL param (for direct browser testing)
+     3. "anonymous" fallback
 
-     Moodle iframe (update intake name only per cohort):
+     INTAKE comes from iframe URL: ?intake=Jun2026
+
+     Moodle iframe:
      <iframe src="https://rene849.github.io/poll-test/?intake=Jun2026"
        style="width:100%; max-width:640px; height:480px; border:none; display:block; margin:0 auto;"
        title="Poll" allowfullscreen></iframe>
@@ -216,10 +185,8 @@ const POLL = {
 
 <div class="poll">
   <div class="poll-question" id="poll-question"></div>
-
   <div class="poll-body">
 
-    <!-- Skeleton shown while loading -->
     <div id="loading-view">
       <div class="skeleton-bar"></div>
       <div class="skeleton-bar"></div>
@@ -227,13 +194,11 @@ const POLL = {
       <div class="skeleton-bar"></div>
     </div>
 
-    <!-- Vote view -->
     <div id="vote-view" style="display:none">
       <div class="options" id="options-list"></div>
       <button class="submit-btn" id="submit-btn" disabled onclick="submitVote()">Submit answer</button>
     </div>
 
-    <!-- Results view -->
     <div id="results-view" style="display:none">
       <div class="results" id="results-list"></div>
       <p class="total-note" id="total-note"></p>
@@ -245,7 +210,6 @@ const POLL = {
       </p>
     </div>
 
-    <!-- Error view -->
     <div id="error-view" style="display:none">
       <div class="error-banner" id="error-msg"></div>
     </div>
@@ -257,30 +221,11 @@ const POLL = {
 <script>
 (function () {
 
-  // ── GET USER ID ───────────────────────────────────────
-  // 1. Try Moodle parent window first
-  // 2. Fall back to ?uid= URL param (for direct browser testing)
-  // 3. Fall back to "anonymous"
-  function getUserId() {
-    try {
-      var pid = window.parent.M && window.parent.M.cfg && window.parent.M.cfg.userId;
-      if (pid) return String(pid);
-    } catch (e) {}
-    var urlId = new URLSearchParams(window.location.search).get("uid");
-    if (urlId) return urlId;
-    return "anonymous";
-  }
+  var intakeId  = new URLSearchParams(window.location.search).get("intake") || null;
+  var uid       = null;
+  var pollReady = false;   // true once load request has been sent
+  var selected  = null;
 
-  // ── GET INTAKE ID ─────────────────────────────────────
-  function getIntakeId() {
-    return new URLSearchParams(window.location.search).get("intake") || null;
-  }
-
-  var intakeId = getIntakeId();
-  var uid      = getUserId();
-  var selected = null;
-
-  // ── INIT ──────────────────────────────────────────────
   document.getElementById("poll-question").textContent = POLL.question;
   buildOptions();
 
@@ -289,35 +234,68 @@ const POLL = {
     return;
   }
 
-  // ── ALL REQUESTS USE POST ─────────────────────────────
-  // GET requests are blocked by Moodle's Content Security Policy
-  // POST requests work correctly from within the Moodle iframe
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    body:   JSON.stringify({
-      action:   "load",
-      intakeId: intakeId,
-      uid:      uid
-    })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    hide("loading-view");
-    if (!data.ok) {
-      showError(data.error || "Could not load poll. Please try again later.");
-      return;
-    }
-    if (data.voted) {
-      // User already voted — show their frozen results
-      renderResults(data.counts, data.total, false, data.answer);
-    } else {
-      show("vote-view");
-    }
-  })
-  .catch(function() {
-    hide("loading-view");
-    showError("Could not reach the server. Please check your connection and try again.");
+  // ── STEP 1: Try URL param immediately ────────────────
+  // Works for direct browser testing: ?uid=testuser123
+  var urlUid = new URLSearchParams(window.location.search).get("uid");
+  if (urlUid) {
+    uid = urlUid;
+    loadPoll();
+    return;
+  }
+
+  // ── STEP 2: Listen for postMessage from Moodle ───────
+  // Moodle Additional HTML script sends: { type: 'moodleUserId', userId: 26 }
+  window.addEventListener("message", function(event) {
+    // Only accept messages containing moodleUserId
+    if (!event.data || !event.data.type || event.data.type !== "moodleUserId") return;
+    if (pollReady) return; // already loaded — ignore duplicates
+
+    uid = String(event.data.userId);
+    loadPoll();
   });
+
+  // ── STEP 3: Fallback after 3 seconds ─────────────────
+  // If no postMessage arrives, proceed as anonymous
+  // This ensures the poll always loads even if the
+  // Additional HTML script hasn't been added yet
+  setTimeout(function() {
+    if (pollReady) return;
+    uid = "anonymous";
+    loadPoll();
+  }, 3000);
+
+
+  // ── LOAD POLL ─────────────────────────────────────────
+  function loadPoll() {
+    if (pollReady) return;
+    pollReady = true;
+
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      body:   JSON.stringify({
+        action:   "load",
+        intakeId: intakeId,
+        uid:      uid
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      hide("loading-view");
+      if (!data.ok) {
+        showError(data.error || "Could not load poll. Please try again later.");
+        return;
+      }
+      if (data.voted) {
+        renderResults(data.counts, data.total, false, data.answer);
+      } else {
+        show("vote-view");
+      }
+    })
+    .catch(function() {
+      hide("loading-view");
+      showError("Could not reach the server. Please check your connection.");
+    });
+  }
 
 
   // ── BUILD OPTIONS ─────────────────────────────────────
@@ -325,7 +303,7 @@ const POLL = {
     var list = document.getElementById("options-list");
     POLL.options.forEach(function(opt, i) {
       var btn = document.createElement("button");
-      btn.className  = "option-btn";
+      btn.className   = "option-btn";
       btn.textContent = opt;
       btn.addEventListener("click", function() {
         selected = i;
@@ -431,9 +409,9 @@ const POLL = {
   function showVoteError(msg) {
     var el = document.getElementById("vote-error-inline");
     if (!el) {
-      el            = document.createElement("div");
-      el.id         = "vote-error-inline";
-      el.className  = "error-banner";
+      el           = document.createElement("div");
+      el.id        = "vote-error-inline";
+      el.className = "error-banner";
       document.getElementById("vote-view").appendChild(el);
     }
     el.textContent   = msg;
