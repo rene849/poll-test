@@ -8,7 +8,7 @@
   :root {
     --brand:       #2E45B8; /* Chicago 45 */
     --bar-bg:      #ebedfa; /* Chicago 95 */
-    --text:        #0d0d0d; /* Chicago Font Color */
+    --text:        #0d0d0d;
     --text-muted:  #555555;
     --bg:          #ffffff;
     --radius:      4px;
@@ -30,202 +30,418 @@
     padding: 30px;
   }
 
-  .poll-question { 
-    font-size: 19px; 
-    font-weight: 600; 
-    color: var(--text); 
-    line-height: 1.4; 
+  .poll-question {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.4;
     margin-bottom: 24px;
   }
 
-  /* ── Options View ── */
+  /* ── Options ── */
   .options { display: flex; flex-direction: column; gap: 10px; }
+
   .option-btn {
     display: flex; align-items: center; padding: 14px 16px;
     border: 1px solid #ddd; border-radius: var(--radius);
     background: var(--bg); cursor: pointer; font-size: 15px;
     color: var(--text); width: 100%; transition: 0.15s;
+    font-family: var(--font);
   }
+
   .option-btn:hover { background: #f9f9f9; border-color: var(--brand); }
+  .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .submit-btn {
     margin-top: 16px; width: 100%; padding: 12px;
     background: var(--brand); color: #fff; border: none;
     border-radius: var(--radius); font-weight: 600; cursor: pointer;
-    transition: opacity 0.2s;
+    font-family: var(--font); font-size: 15px;
+    transition: opacity 0.2s, background 0.15s;
   }
+
+  .submit-btn:hover   { background: #1a2a6e; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* ── Results View ── */
+  /* ── Error ── */
+  .error-banner {
+    padding: 10px 14px;
+    background: #fdf3f2;
+    border: 1px solid #e8b4b0;
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: #7a2020;
+    line-height: 1.5;
+    margin-top: 10px;
+  }
+
+  /* ── Results ── */
   .results { display: flex; flex-direction: column; gap: 15px; }
-  .result-row { border: 1px solid #e0e0e0; padding: 15px; display: flex; flex-direction: column; }
-  .result-label { font-size: 16px; font-weight: 500; padding-bottom: 0.5rem; color: var(--text); }
-  .bar-container { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  
-  .bar-track { 
-    flex-grow: 1; 
-    height: 40px; 
-    background: var(--bar-bg); /* Chicago 95 */
-    position: relative; 
+
+  .result-row {
+    border: 1px solid #e0e0e0;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
   }
 
-  .bar-fill { 
-    height: 100%; 
-    background: var(--brand); /* Chicago 45 */
-    width: 0%; 
-    transition: width 0.6s cubic-bezier(0.1, 0.5, 0.5, 1); 
-    display: flex; 
-    align-items: center; 
-    justify-content: flex-end; 
+  .result-label {
+    font-size: 16px;
+    font-weight: 500;
+    padding-bottom: 0.5rem;
+    color: var(--text);
   }
 
-  .inner-number { 
-    color: white; 
-    font-size: 14px; 
-    padding-right: 0.5rem; /* Requested Padding */
+  .result-label.mine {
+    color: var(--brand);
+    font-weight: 700;
   }
 
-  .result-pct { 
-    font-size: 16px; 
-    min-width: 45px; 
-    text-align: right; 
+  .bar-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .bar-track {
+    flex-grow: 1;
+    height: 40px;
+    background: var(--bar-bg);
+    position: relative;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: var(--brand);
+    width: 0%;
+    transition: width 0.6s cubic-bezier(0.1, 0.5, 0.5, 1);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 32px;
+  }
+
+  .inner-number {
+    color: white;
+    font-size: 14px;
+    padding-right: 0.5rem;
+  }
+
+  .result-pct {
+    font-size: 16px;
+    min-width: 45px;
+    text-align: right;
     font-weight: 500;
     color: var(--text);
   }
 
-  .total-note { margin-top: 20px; font-size: 12px; color: var(--text-muted); text-align: right; }
+  .total-note {
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: right;
+  }
 
-  /* Skeleton Loading State */
-  .skeleton-bar { height: 80px; background: #f9f9f9; border: 1px solid #eee; margin-bottom: 15px; animation: pulse 1.5s infinite; }
+  .voted-note {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .thanks {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: var(--bar-bg);
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--brand);
+    font-weight: 500;
+  }
+
+  /* ── Skeleton ── */
+  .skeleton-bar {
+    height: 80px;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    margin-bottom: 15px;
+    animation: pulse 1.5s infinite;
+    border-radius: var(--radius);
+  }
+
   @keyframes pulse { 50% { opacity: 0.5; } }
+
+  @media (max-width: 480px) {
+    .poll { padding: 20px; }
+    .poll-question { font-size: 16px; }
+    .option-btn { font-size: 14px; padding: 12px 14px; }
+    .bar-track { height: 36px; }
+  }
 </style>
 </head>
 <body>
 
+<!-- ═══════════════════════════════════════════════════════
+     POLL CONFIG — only edit these values:
+     1. SCRIPT_URL — set once, never changes
+     2. POLL question + options — only if content changes
+
+     USER ID is read automatically from Moodle parent window
+     INTAKE comes from the iframe URL: ?intake=Jun2026
+
+     Moodle iframe (update intake name only per cohort):
+     <iframe src="https://rene849.github.io/poll-test/?intake=Jun2026"
+       style="width:100%; max-width:640px; height:480px; border:none; display:block; margin:0 auto;"
+       title="Poll" allowfullscreen></iframe>
+     ═══════════════════════════════════════════════════════ -->
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI2asjsvXhJ9RHo3GFlSbbAvRL08knfKty_iX64SHv6hwM7gix5WR2IRV0XOGpClIQ/exec";
 
 const POLL = {
-  question: "Would you rather have a hearty greeting or a cordial one?",
-  options: ["Hearty", "Cordial"]
+  question: "Which learning format do you find most effective?",
+  options: [
+    "Short videos (under 5 mins)",
+    "Interactive scenarios",
+    "Written guides and job aids",
+    "Live virtual sessions"
+  ]
 };
 </script>
+<!-- ══════════════ END CONFIG ═══════════════════════════ -->
+
 
 <div class="poll">
-  <div class="poll-question">Would you rather have a hearty greeting or a cordial one?</div>
-  
+  <div class="poll-question" id="poll-question"></div>
+
   <div class="poll-body">
+
+    <!-- Skeleton shown while loading -->
     <div id="loading-view">
+      <div class="skeleton-bar"></div>
+      <div class="skeleton-bar"></div>
       <div class="skeleton-bar"></div>
       <div class="skeleton-bar"></div>
     </div>
 
+    <!-- Vote view -->
     <div id="vote-view" style="display:none">
       <div class="options" id="options-list"></div>
       <button class="submit-btn" id="submit-btn" disabled onclick="submitVote()">Submit answer</button>
     </div>
 
+    <!-- Results view -->
     <div id="results-view" style="display:none">
       <div class="results" id="results-list"></div>
       <p class="total-note" id="total-note"></p>
+      <div class="thanks" id="thanks-msg" style="display:none">
+        ✓ Thanks for sharing your view!
+      </div>
+      <p class="voted-note" id="voted-note" style="display:none">
+        You've already responded to this poll.
+      </p>
     </div>
+
+    <!-- Error view -->
+    <div id="error-view" style="display:none">
+      <div class="error-banner" id="error-msg"></div>
+    </div>
+
   </div>
 </div>
 
+
 <script>
 (function () {
-  const params = new URLSearchParams(window.location.search);
-  const intakeId = params.get("intake") || "default"; 
-  const uid = params.get("uid") || "user";
-  let selected = null;
 
+  // ── GET USER ID ───────────────────────────────────────
+  // 1. Try Moodle parent window first
+  // 2. Fall back to ?uid= URL param (for direct browser testing)
+  // 3. Fall back to "anonymous"
+  function getUserId() {
+    try {
+      var pid = window.parent.M && window.parent.M.cfg && window.parent.M.cfg.userId;
+      if (pid) return String(pid);
+    } catch (e) {}
+    var urlId = new URLSearchParams(window.location.search).get("uid");
+    if (urlId) return urlId;
+    return "anonymous";
+  }
+
+  // ── GET INTAKE ID ─────────────────────────────────────
+  function getIntakeId() {
+    return new URLSearchParams(window.location.search).get("intake") || null;
+  }
+
+  var intakeId = getIntakeId();
+  var uid      = getUserId();
+  var selected = null;
+
+  // ── INIT ──────────────────────────────────────────────
+  document.getElementById("poll-question").textContent = POLL.question;
   buildOptions();
 
-  // Load the initial state from Google Apps Script
+  if (!intakeId) {
+    showError("Poll configuration error — no intake ID in URL. Please contact your administrator.");
+    return;
+  }
+
+  // ── ALL REQUESTS USE POST ─────────────────────────────
+  // GET requests are blocked by Moodle's Content Security Policy
+  // POST requests work correctly from within the Moodle iframe
   fetch(SCRIPT_URL, {
     method: "POST",
-    mode: 'no-cors', // Optimization for Apps Script latency
-    body: JSON.stringify({ action: "load", intakeId: intakeId, uid: uid })
-  }).catch(() => {}); // Silent catch for no-cors 
-
-  // We actually perform a standard fetch to get data
-  fetch(SCRIPT_URL + "?action=load&intakeId=" + intakeId + "&uid=" + uid)
-  .then(r => r.json())
-  .then(data => {
-    document.getElementById("loading-view").style.display = "none";
+    body:   JSON.stringify({
+      action:   "load",
+      intakeId: intakeId,
+      uid:      uid
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    hide("loading-view");
+    if (!data.ok) {
+      showError(data.error || "Could not load poll. Please try again later.");
+      return;
+    }
     if (data.voted) {
-      renderResults(data.counts, data.total || 0, data.answer);
+      // User already voted — show their frozen results
+      renderResults(data.counts, data.total, false, data.answer);
     } else {
-      document.getElementById("vote-view").style.display = "block";
+      show("vote-view");
     }
   })
-  .catch(() => {
-    document.getElementById("loading-view").style.display = "none";
-    document.getElementById("vote-view").style.display = "block";
+  .catch(function() {
+    hide("loading-view");
+    showError("Could not reach the server. Please check your connection and try again.");
   });
 
+
+  // ── BUILD OPTIONS ─────────────────────────────────────
   function buildOptions() {
-    const list = document.getElementById("options-list");
-    POLL.options.forEach((opt, i) => {
-      const btn = document.createElement("button");
-      btn.className = "option-btn";
+    var list = document.getElementById("options-list");
+    POLL.options.forEach(function(opt, i) {
+      var btn = document.createElement("button");
+      btn.className  = "option-btn";
       btn.textContent = opt;
-      btn.onclick = () => {
+      btn.addEventListener("click", function() {
         selected = i;
-        document.querySelectorAll(".option-btn").forEach((b, idx) => {
-           b.style.borderColor = (idx === i) ? "var(--brand)" : "#ddd";
-           b.style.background = (idx === i) ? "#f4f6ff" : "#fff";
+        document.querySelectorAll(".option-btn").forEach(function(b, idx) {
+          b.style.borderColor = (idx === i) ? "var(--brand)" : "#ddd";
+          b.style.background  = (idx === i) ? "#f4f6ff"      : "#fff";
         });
         document.getElementById("submit-btn").disabled = false;
-      };
+      });
       list.appendChild(btn);
     });
   }
 
+
+  // ── SUBMIT VOTE ───────────────────────────────────────
   window.submitVote = function() {
-    const btn = document.getElementById("submit-btn");
-    btn.disabled = true;
+    if (selected === null) return;
+
+    var btn = document.getElementById("submit-btn");
+    btn.disabled    = true;
     btn.textContent = "Submitting...";
+    document.querySelectorAll(".option-btn").forEach(function(b) { b.disabled = true; });
 
     fetch(SCRIPT_URL, {
       method: "POST",
-      body: JSON.stringify({ action: "vote", intakeId: intakeId, option: POLL.options[selected], uid: uid })
+      body:   JSON.stringify({
+        action:   "vote",
+        intakeId: intakeId,
+        option:   POLL.options[selected],
+        uid:      uid
+      })
     })
-    .then(r => r.json())
-    .then(data => renderResults(data.counts, data.total || 0, POLL.options[selected]));
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        renderResults(data.counts, data.total, !data.already, POLL.options[selected]);
+      } else {
+        showVoteError(data.error || "Could not save your vote. Please try again.");
+        btn.disabled    = false;
+        btn.textContent = "Submit answer";
+        document.querySelectorAll(".option-btn").forEach(function(b) { b.disabled = false; });
+      }
+    })
+    .catch(function() {
+      showVoteError("Could not reach the server. Please check your connection.");
+      btn.disabled    = false;
+      btn.textContent = "Submit answer";
+      document.querySelectorAll(".option-btn").forEach(function(b) { b.disabled = false; });
+    });
   };
 
-  function renderResults(counts, total, myAnswer) {
-    const box = document.getElementById("results-list");
+
+  // ── RENDER RESULTS ────────────────────────────────────
+  function renderResults(counts, total, justVoted, myAnswer) {
+    var box       = document.getElementById("results-list");
+    var safeTotal = total || 0;
     box.innerHTML = "";
-    const safeTotal = total || 0;
 
-    POLL.options.forEach(opt => {
-      const votes = (counts && counts[opt]) ? counts[opt] : 0;
-      const pct = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
+    POLL.options.forEach(function(opt) {
+      var votes = (counts && counts[opt]) ? counts[opt] : 0;
+      var pct   = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
+      var mine  = opt === myAnswer;
 
-      const row = document.createElement("div");
+      var row = document.createElement("div");
       row.className = "result-row";
-      row.innerHTML = `
-        <div class="result-label">${opt}</div>
-        <div class="bar-container">
-          <div class="bar-track">
-            <div class="bar-fill" style="width: ${pct}%">
-              <span class="inner-number">${votes}</span>
-            </div>
-          </div>
-          <div class="result-pct">${pct}%</div>
-        </div>
-      `;
+      row.innerHTML =
+        '<div class="result-label' + (mine ? " mine" : "") + '">' +
+          (mine ? "✓ " : "") + opt +
+        '</div>' +
+        '<div class="bar-container">' +
+          '<div class="bar-track">' +
+            '<div class="bar-fill" style="width:' + pct + '%">' +
+              '<span class="inner-number">' + votes + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="result-pct">' + pct + '%</div>' +
+        '</div>';
       box.appendChild(row);
     });
 
-    document.getElementById("total-note").textContent = safeTotal + " responses so far";
-    document.getElementById("loading-view").style.display = "none";
-    document.getElementById("vote-view").style.display = "none";
-    document.getElementById("results-view").style.display = "block";
+    document.getElementById("total-note").textContent =
+      safeTotal + " response" + (safeTotal !== 1 ? "s" : "") + " so far";
+    document.getElementById("thanks-msg").style.display = justVoted ? "flex"  : "none";
+    document.getElementById("voted-note").style.display = justVoted ? "block" : "none";
+
+    hide("loading-view");
+    hide("vote-view");
+    show("results-view");
   }
+
+
+  // ── HELPERS ───────────────────────────────────────────
+  function show(id) { document.getElementById(id).style.display = "block"; }
+  function hide(id) { document.getElementById(id).style.display = "none";  }
+
+  function showError(msg) {
+    hide("loading-view");
+    hide("vote-view");
+    document.getElementById("error-msg").textContent = msg;
+    show("error-view");
+  }
+
+  function showVoteError(msg) {
+    var el = document.getElementById("vote-error-inline");
+    if (!el) {
+      el            = document.createElement("div");
+      el.id         = "vote-error-inline";
+      el.className  = "error-banner";
+      document.getElementById("vote-view").appendChild(el);
+    }
+    el.textContent   = msg;
+    el.style.display = "block";
+  }
+
 })();
 </script>
+
 </body>
 </html>
