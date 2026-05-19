@@ -22,7 +22,7 @@
     padding: 16px;
   }
 
-  /* ── Poll wrapper — Strict fixed height to stop Moodle iframe jumps ── */
+  /* ── Poll wrapper — Fixed height to completely eliminate Moodle iframe jumps ── */
   .poll {
     width: 100%;
     max-width: 600px;
@@ -32,7 +32,7 @@
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 24px;
-    height: 410px; /* Perfectly encloses both states */
+    height: 430px; /* Rigidly uniform container height */
     display: flex;
     flex-direction: column;
   }
@@ -46,16 +46,21 @@
     height: 52px;
   }
 
-  /* ── Views — Identical sizing ── */
+  /* ── Structural Containers ── */
   #loading-view, #vote-view, #results-view {
     display: flex;
     flex-direction: column;
-    height: 300px;
+    justify-content: space-between; /* Evenly distributes elements inside the 300px block */
+    height: 310px;
+  }
+
+  .options, .results { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
   }
 
   /* ── Vote View Styling ── */
-  .options { display: flex; flex-direction: column; gap: 10px; }
-
   .option-btn {
     display: flex; align-items: center; padding: 14px 16px;
     border: 1px solid #ddd; border-radius: var(--radius);
@@ -68,7 +73,7 @@
   .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .submit-btn {
-    margin-top: 16px; width: 100%; padding: 12px;
+    width: 100%; padding: 12px;
     background: var(--brand); color: #fff; border: none;
     border-radius: var(--radius); font-weight: 600; cursor: pointer;
     font-family: var(--font); font-size: 15px;
@@ -78,23 +83,14 @@
   .submit-btn:hover    { background: #1a2a6e; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* ── The Magic Balancer ── */
-  /* This occupies the exact missing pixel space during voting, then vanishes */
-  .spacer-balance {
-    height: 52px; 
-    width: 100%;
-  }
-
   /* ── Results View Styling ── */
-  .results { display: flex; flex-direction: column; gap: 10px; }
-
   .result-row {
     border: 1px solid #e0e0e0;
     padding: 10px 14px;
     display: flex;
     flex-direction: column;
     border-radius: var(--radius);
-    height: 74px; /* Stacked layout requires 74px */
+    height: 74px;
   }
 
   .result-label {
@@ -125,23 +121,16 @@
   .inner-number { color: white; font-size: 11px; padding-right: 6px; }
   .result-pct { font-size: 14px; min-width: 38px; text-align: right; font-weight: 500; color: var(--text); }
 
-  /* ── Footer Elements ── */
-  .total-note {
-    margin-top: 8px; font-size: 11px;
-    color: var(--text-muted); text-align: right;
-    height: 14px;
-  }
-
-  .status-line {
-    margin-top: 12px;
-    height: 44px; /* Matches submit button height */
+  /* ── Minimalist Text Footer (Saves Space, Prevents Shifting) ── */
+  .footer-text-line {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+    height: 44px; /* Matches the exact height footprint of the submit button */
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
-    color: var(--text-muted);
-    border-radius: var(--radius);
-    background: var(--bar-bg);
+    gap: 6px;
   }
 
   /* ── Loading / Skeleton ── */
@@ -151,8 +140,8 @@
     background-size: 200% 100%;
     animation: shimmer 1.2s infinite;
   }
-  .skel-option { height: 74px; } /* Matches result row height */
-  .skel-submit { height: 44px; margin-top: 16px; }
+  .skel-option { height: 74px; }
+  .skel-submit { height: 44px; }
 
   @keyframes shimmer {
     0%   { background-position: 200% 0; }
@@ -191,15 +180,17 @@ const POLL = {
 
   <div id="vote-view" style="display:none">
     <div class="options" id="options-list"></div>
-    <div class="spacer-balance"></div>
     <button class="submit-btn" id="submit-btn" disabled onclick="submitVote()">Submit answer</button>
     <div id="vote-error-inline" class="error-banner" style="display:none"></div>
   </div>
 
   <div id="results-view" style="display:none">
     <div class="results" id="results-list"></div>
-    <p class="total-note" id="total-note"></p>
-    <div class="status-line" id="status-line">You've responded to this poll.</div>
+    <div class="footer-text-line">
+      <span>You've responded to this poll.</span>
+      <span>•</span>
+      <span id="total-note">0 responses so far</span>
+    </div>
   </div>
 
   <div id="error-view" style="display:none">
