@@ -22,7 +22,6 @@
     padding: 16px;
   }
 
-  /* ── Poll wrapper — Perfectly uniform, balanced spacing container ── */
   .poll {
     width: 100%;
     max-width: 600px;
@@ -32,7 +31,7 @@
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 24px;
-    height: 440px; /* Secure height to ensure everything sits beautifully inside */
+    height: 440px; 
     display: flex;
     flex-direction: column;
   }
@@ -42,11 +41,10 @@
     font-weight: 600;
     color: var(--text);
     line-height: 1.4;
-    margin-bottom: 12px; /* Pulls options and text tighter together */
+    margin-bottom: 12px;
     min-height: 52px;
   }
 
-  /* ── Structural Layout Views (Safely using Block to prevent JS runtime failures) ── */
   #loading-view { display: block; }
   #vote-view { display: none; }
   #results-view { display: none; }
@@ -58,7 +56,6 @@
     gap: 10px; 
   }
 
-  /* ── Vote View Styling ── */
   .option-btn {
     display: flex; align-items: center; padding: 14px 16px;
     border: 1px solid #ddd; border-radius: var(--radius);
@@ -71,7 +68,7 @@
   .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .submit-btn {
-    margin-top: 12px; /* Even margin distribution */
+    margin-top: 12px;
     width: 100%; padding: 12px;
     background: var(--brand); color: #fff; border: none;
     border-radius: var(--radius); font-weight: 600; cursor: pointer;
@@ -82,7 +79,6 @@
   .submit-btn:hover    { background: #1a2a6e; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* ── Results View Styling ── */
   .result-row {
     border: 1px solid #e0e0e0;
     padding: 10px 14px;
@@ -120,38 +116,38 @@
   .inner-number { color: white; font-size: 11px; padding-right: 6px; }
   .result-pct { font-size: 14px; min-width: 38px; text-align: right; font-weight: 500; color: var(--text); }
 
-  /* ── Minimalist Clean Sentence Footer text ── */
   .footer-text-line {
-    margin-top: 12px; /* Exactly matches submit button margin top */
+    margin-top: 12px;
     font-size: 13px;
     color: var(--text-muted);
     text-align: center;
-    height: 44px; /* Matches submit button footprint */
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
   }
 
-  /* ── Loading / Skeleton ── */
+  /* Simple Fading Pulse Animation */
   .skel {
     border-radius: var(--radius);
-    background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.2s infinite;
+    background: #f0f0f0;
+    animation: pulse 1.5s infinite ease-in-out;
   }
   .skel-option { height: 50px; margin-bottom: 10px; }
   .skel-option:last-child { margin-bottom: 0; }
   .skel-submit { height: 44px; margin-top: 12px; }
 
-  @keyframes shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+  @keyframes pulse {
+    0%   { opacity: 0.6; }
+    50%  { opacity: 1.0; }
+    100% { opacity: 0.6; }
   }
 
   .error-banner {
-    padding: 10px 14px; background: #fdf3f2; border: 1px solid #e8b4b0;
-    border-radius: var(--radius); font-size: 13px; color: #7a2020; margin-top: 10px;
+    padding: 12px 16px; background: #fdf3f2; border: 1px solid #e8b4b0;
+    border-radius: var(--radius); font-size: 13px; color: #7a2020; margin-top: 12px;
+    line-height: 1.5;
   }
 </style>
 </head>
@@ -352,13 +348,13 @@ const POLL = {
     });
   }
 
-  // Back to original block show/hide mechanics to guarantee script execution safety
   function show(id) { document.getElementById(id).style.display = "block"; }
   function hide(id) { document.getElementById(id).style.display = "none"; }
   
   function showError(msg) {
     hide("loading-view"); hide("vote-view");
-    document.getElementById("error-msg").textContent = msg; show("error-view");
+    document.getElementById("error-msg").innerHTML = msg + "<br>Please contact the help desk if you are experiencing an issue."; 
+    show("error-view");
   }
 })();
 </script>
