@@ -30,8 +30,8 @@
     border-radius: 8px;
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    padding: 24px 24px 28px 24px;
-    height: 470px; 
+    padding: 24px;
+    height: 420px; 
     display: flex;
     flex-direction: column;
   }
@@ -41,13 +41,17 @@
     font-weight: 600;
     color: var(--text);
     line-height: 1.4;
-    margin-bottom: 6px; 
+    margin-bottom: 16px; 
   }
 
-  #loading-view { display: block; }
-  #vote-view { display: none; }
-  #results-view { display: none; }
-  #error-view { display: none; }
+  #loading-view, #vote-view, #results-view {
+    display: none; 
+    flex-direction: column;
+    justify-content: space-between; 
+    flex-grow: 1;
+  }
+
+  #loading-view { display: flex; } 
 
   .options, .results { 
     display: flex; 
@@ -67,7 +71,6 @@
   .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .submit-btn {
-    margin-top: 12px;
     width: 100%; padding: 12px;
     background: var(--brand); color: #fff; border: none;
     border-radius: var(--radius); font-weight: 600; cursor: pointer;
@@ -116,7 +119,6 @@
   .result-pct { font-size: 14px; min-width: 38px; text-align: right; font-weight: 500; color: var(--text); }
 
   .footer-text-line {
-    margin-top: auto; 
     font-size: 13px;
     color: var(--text-muted);
     text-align: center;
@@ -134,7 +136,7 @@
   }
   .skel-option { height: 50px; margin-bottom: 10px; }
   .skel-option:last-child { margin-bottom: 0; }
-  .skel-submit { height: 44px; margin-top: 12px; }
+  .skel-submit { height: 44px; }
 
   @keyframes pulse {
     0%   { opacity: 0.6; }
@@ -144,9 +146,10 @@
 
   .error-banner {
     padding: 16px; background: #fdf3f2; border: 1px solid #e8b4b0;
-    border-radius: var(--radius); font-size: 14px; color: #7a2020; margin-top: 12px;
+    border-radius: var(--radius); font-size: 14px; color: #7a2020;
     line-height: 1.5; text-align: center;
   }
+  #error-view { display: none; flex-grow: 1; align-items: center; justify-content: center; }
 </style>
 </head>
 <body>
@@ -346,7 +349,7 @@ const POLL = {
     });
   }
 
-  function show(id) { document.getElementById(id).style.display = "block"; }
+  function show(id) { document.getElementById(id).style.display = "flex"; }
   function hide(id) { document.getElementById(id).style.display = "none"; }
   
   function showError(msg) {
