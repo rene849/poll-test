@@ -31,7 +31,7 @@
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 24px;
-    min-height: 440px; 
+    height: 440px; 
     display: flex;
     flex-direction: column;
   }
@@ -48,14 +48,6 @@
   #vote-view { display: none; }
   #results-view { display: none; }
   #error-view { display: none; }
-
-  /* Flexible content containers for clean vertical layout distribution */
-  #vote-view, #results-view {
-    flex-direction: column;
-    justify-content: space-between;
-    flex-grow: 1;
-    min-height: 320px;
-  }
 
   .options, .results { 
     display: flex; 
@@ -76,7 +68,6 @@
 
   .submit-btn {
     margin-top: 16px;
-    margin-bottom: 8px;
     width: 100%; padding: 12px;
     background: var(--brand); color: #fff; border: none;
     border-radius: var(--radius); font-weight: 600; cursor: pointer;
@@ -129,8 +120,7 @@
   .result-pct { font-size: 14px; min-width: 38px; text-align: right; font-weight: 500; color: var(--text); }
 
   .footer-text-line {
-    margin-top: 16px;
-    margin-bottom: 8px;
+    margin-top: 24px;
     font-size: 13px;
     color: var(--text-muted);
     text-align: center;
@@ -296,4 +286,79 @@ const POLL = {
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (data.ok && data.counts
+      if (data.ok && data.counts) {
+        updateBars(data.counts, data.total);
+        document.getElementById("total-note").textContent = data.total + " responses so far.";
+      }
+    })
+    .catch(function() {});
+  };
+
+  function renderResults(counts, total, justVoted, myAnswer) {
+    var box = document.getElementById("results-list");
+    var safeTotal = total || 0;
+    box.innerHTML = "";
+
+    POLL.options.forEach(function(opt, idx) {
+      var votes = (counts && counts[opt]) ? counts[opt] : 0;
+      var pct   = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
+      var mine  = opt === myAnswer;
+
+      var row = document.createElement("div");
+      row.className = "result-row";
+      row.innerHTML =
+        '<div class="result-label' + (mine ? " mine" : "") + '">' + (mine ? "✓ " : "") + opt + '</div>' +
+        '<div class="bar-container">' +
+          '<div class="bar-track">' +
+            '<div class="bar-fill" style="width:0%"><span class="inner-number">' + votes + '</span></div>' +
+          '</div>' +
+          '<div class="result-pct">' + pct + '%</div>' +
+        '</div>';
+      box.appendChild(row);
+    });
+
+    document.getElementById("total-note").textContent = safeTotal + " responses so far.";
+    hide("loading-view");
+    hide("vote-view");
+    show("results-view");
+
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        box.querySelectorAll(".result-row").forEach(function(row, idx) {
+          var opt = POLL.options[idx];
+          var votes = (counts && counts[opt]) ? counts[opt] : 0;
+          var pct = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
+          var bar = row.querySelector(".bar-fill");
+          if (bar) bar.style.width = pct + "%";
+        });
+      });
+    });
+  }
+
+  function updateBars(counts, total) {
+    var safeTotal = total || 0;
+    document.querySelectorAll(".result-row").forEach(function(row, idx) {
+      var opt = POLL.options[idx];
+      var votes = (counts && counts[opt]) ? counts[opt] : 0;
+      var pct = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
+      var bar = row.querySelector(".bar-fill");
+      var num = row.querySelector(".inner-number");
+      var pctEl = row.querySelector(".result-pct");
+      if (bar) bar.style.width = pct + "%";
+      if (num) num.textContent = votes;
+      if (pctEl) pctEl.textContent = pct + "%";
+    });
+  }
+
+  function show(id) { document.getElementById(id).style.display = "block"; }
+  function hide(id) { document.getElementById(id).style.display = "none"; }
+  
+  function showError(msg) {
+    hide("loading-view"); hide("vote-view");
+    document.getElementById("error-msg").innerHTML = msg + "<br>Please contact the help desk if you are experiencing an issue."; 
+    show("error-view");
+  }
+})();
+</script>
+</body>
+</html>
