@@ -31,7 +31,7 @@
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 24px;
-    height: 420px; 
+    height: 390px; 
     display: flex;
     flex-direction: column;
   }
@@ -41,13 +41,12 @@
     font-weight: 600;
     color: var(--text);
     line-height: 1.4;
-    margin-bottom: 16px; 
+    margin-bottom: 20px; 
   }
 
   #loading-view, #vote-view, #results-view {
     display: none; 
     flex-direction: column;
-    justify-content: space-between; 
     flex-grow: 1;
   }
 
@@ -71,6 +70,7 @@
   .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .submit-btn {
+    margin-top: 16px;
     width: 100%; padding: 12px;
     background: var(--brand); color: #fff; border: none;
     border-radius: var(--radius); font-weight: 600; cursor: pointer;
@@ -92,7 +92,8 @@
 
   .result-label {
     font-size: 14px; font-weight: 500;
-    padding-bottom: 6px; color: var(--text);
+    padding-bottom: 0.5rem; 
+    color: var(--text);
   }
   .result-label.mine { color: var(--brand); font-weight: 700; }
 
@@ -115,10 +116,14 @@
     justify-content: flex-end; min-width: 24px;
   }
 
-  .inner-number { color: white; font-size: 11px; padding-right: 6px; }
+  .inner-number { 
+    color: white; font-size: 11px; 
+    padding-right: 0.5rem; 
+  }
   .result-pct { font-size: 14px; min-width: 38px; text-align: right; font-weight: 500; color: var(--text); }
 
   .footer-text-line {
+    margin-top: 16px;
     font-size: 13px;
     color: var(--text-muted);
     text-align: center;
@@ -136,7 +141,7 @@
   }
   .skel-option { height: 50px; margin-bottom: 10px; }
   .skel-option:last-child { margin-bottom: 0; }
-  .skel-submit { height: 44px; }
+  .skel-submit { height: 44px; margin-top: 16px; }
 
   @keyframes pulse {
     0%   { opacity: 0.6; }
@@ -350,14 +355,4 @@ const POLL = {
   }
 
   function show(id) { document.getElementById(id).style.display = "flex"; }
-  function hide(id) { document.getElementById(id).style.display = "none"; }
-  
-  function showError(msg) {
-    hide("loading-view"); hide("vote-view");
-    document.getElementById("error-msg").innerHTML = msg + "<br>Please contact the help desk if you are experiencing an issue."; 
-    show("error-view");
-  }
-})();
-</script>
-</body>
-</html>
+  function hide(id) { document.getElementById(id).style.display = "none";
