@@ -6,34 +6,76 @@
 <title>Poll</title>
 <style>
   :root {
-    --brand:       #2E45B8;
-    --bar-bg:      #ebedfa;
-    --text:        #0d0d0d;
-    --text-muted:  #555555;
-    --bg:          #ffffff;
-    --radius:      4px;
-    --font:        system-ui, 'Segoe UI', sans-serif;
+    --brand:      #2E45B8;
+    --bar-bg:     #ebedfa;
+    --text:       #0d0d0d;
+    --text-muted: #555555;
+    --bg:         #ffffff;
+    --radius:     4px;
+    --font:       system-ui, 'Segoe UI', sans-serif;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { font-family: var(--font); background: transparent; color: var(--text); }
-  body { display: flex; align-items: flex-start; justify-content: center; padding: 16px; }
 
+  body {
+    padding: 16px;
+    /* No flex centering — keeps height predictable */
+  }
+
+  /* ── Poll wrapper — fixed height, never expands ── */
   .poll {
-    width: 100%; max-width: 600px;
-    border: 1px solid #ddd; border-radius: 8px;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    padding: 30px;
+    padding: 24px;
+    /* Fixed height prevents iframe resize — adjust to match your iframe height */
+    min-height: 360px;
+    display: flex;
+    flex-direction: column;
   }
 
   .poll-question {
-    font-size: 19px; font-weight: 600;
-    color: var(--text); line-height: 1.4;
-    margin-bottom: 24px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.4;
+    margin-bottom: 20px;
+    /* Reserve space so layout doesn't shift when question loads */
+    min-height: 52px;
+  }
+
+  /* ── Loading state — shown while waiting for uid/backend ── */
+  #loading-view {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .skel {
+    border-radius: var(--radius);
+    background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s infinite;
+  }
+
+  /* Match option button height */
+  .skel-option { height: 50px; }
+  /* Match submit button height */
+  .skel-submit { height: 44px; margin-top: 6px; }
+
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 
   /* ── Options ── */
+  #vote-view { display: flex; flex-direction: column; flex: 1; }
   .options { display: flex; flex-direction: column; gap: 10px; }
 
   .option-btn {
@@ -42,6 +84,8 @@
     background: var(--bg); cursor: pointer; font-size: 15px;
     color: var(--text); width: 100%; transition: 0.15s;
     font-family: var(--font);
+    /* Fixed height so layout matches skeleton */
+    height: 50px;
   }
 
   .option-btn:hover  { background: #f9f9f9; border-color: var(--brand); }
@@ -53,10 +97,25 @@
     border-radius: var(--radius); font-weight: 600; cursor: pointer;
     font-family: var(--font); font-size: 15px;
     transition: opacity 0.2s, background 0.15s;
+    height: 44px;
   }
 
   .submit-btn:hover    { background: #1a2a6e; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Status line — replaces submit button space after voting ── */
+  /* Same height as submit button so layout never shifts */
+  .status-line {
+    margin-top: 16px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-radius: var(--radius);
+    background: var(--bar-bg);
+  }
 
   /* ── Error ── */
   .error-banner {
@@ -67,15 +126,19 @@
   }
 
   /* ── Results ── */
-  .results { display: flex; flex-direction: column; gap: 15px; }
+  #results-view { display: flex; flex-direction: column; flex: 1; }
+  .results { display: flex; flex-direction: column; gap: 10px; }
 
   .result-row {
-    border: 1px solid #e0e0e0; padding: 15px;
-    display: flex; flex-direction: column;
+    border: 1px solid #e0e0e0;
+    padding: 12px 15px;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius);
   }
 
   .result-label {
-    font-size: 16px; font-weight: 500;
+    font-size: 15px; font-weight: 500;
     padding-bottom: 0.5rem; color: var(--text);
   }
 
@@ -87,64 +150,38 @@
   }
 
   .bar-track {
-    flex-grow: 1; height: 40px;
+    flex-grow: 1; height: 36px;
     background: var(--bar-bg); position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
   }
 
   .bar-fill {
     height: 100%; background: var(--brand);
-    width: 0%; transition: width 0.6s cubic-bezier(0.1,0.5,0.5,1);
+    width: 0%; transition: width 0.5s cubic-bezier(0.1,0.5,0.5,1);
     display: flex; align-items: center;
-    justify-content: flex-end; min-width: 32px;
+    justify-content: flex-end; min-width: 28px;
   }
 
   .inner-number {
-    color: white; font-size: 14px; padding-right: 0.5rem;
+    color: white; font-size: 13px; padding-right: 0.5rem;
   }
 
   .result-pct {
-    font-size: 16px; min-width: 45px;
+    font-size: 15px; min-width: 42px;
     text-align: right; font-weight: 500; color: var(--text);
   }
 
   .total-note {
-    margin-top: 20px; font-size: 12px;
+    margin-top: 8px; font-size: 11px;
     color: var(--text-muted); text-align: right;
   }
 
-  .voted-note {
-    margin-top: 12px; font-size: 12px;
-    color: var(--text-muted); text-align: center;
-  }
-
-  .thanks {
-    display: flex; align-items: center; gap: 8px;
-    margin-top: 12px; padding: 10px 12px;
-    background: var(--bar-bg); border-radius: var(--radius);
-    font-size: 13px; color: var(--brand); font-weight: 500;
-  }
-
-  /* ── Skeleton ── */
-  .skeleton-bar {
-    height: 80px; background: #f9f9f9;
-    border: 1px solid #eee; margin-bottom: 15px;
-    animation: pulse 1.5s infinite; border-radius: var(--radius);
-  }
-
-  @keyframes pulse { 50% { opacity: 0.5; } }
-
-  /* ── Waiting for ID notice ── */
-  .waiting-notice {
-    font-size: 13px; color: var(--text-muted);
-    text-align: center; padding: 8px 0;
-    display: none;
-  }
-
   @media (max-width: 480px) {
-    .poll { padding: 20px; }
+    .poll { padding: 16px; }
     .poll-question { font-size: 16px; }
-    .option-btn { font-size: 14px; padding: 12px 14px; }
-    .bar-track { height: 36px; }
+    .option-btn { font-size: 14px; height: 46px; }
+    .bar-track { height: 32px; }
   }
 </style>
 </head>
@@ -155,17 +192,18 @@
      1. SCRIPT_URL — set once, never changes
      2. POLL question + options — only if content changes
 
-     USER ID sources (in priority order):
-     1. postMessage from Moodle parent (via Additional HTML script)
-     2. ?uid= URL param (for direct browser testing)
-     3. "anonymous" fallback
-
-     INTAKE comes from iframe URL: ?intake=Jun2026
+     USER ID priority:
+     1. postMessage from Moodle footer script
+     2. ?uid= URL param (direct browser testing)
+     3. "anonymous" after 3s fallback
 
      Moodle iframe:
      <iframe src="https://rene849.github.io/poll-test/?intake=Jun2026"
-       style="width:100%; max-width:640px; height:480px; border:none; display:block; margin:0 auto;"
+       style="width:100%; max-width:640px; height:420px; border:none; display:block; margin:0 auto;"
        title="Poll" allowfullscreen></iframe>
+
+     IMPORTANT: iframe height should match .poll min-height + body padding
+     Current: min-height 360px + 32px padding = ~420px total
      ═══════════════════════════════════════════════════════ -->
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI2asjsvXhJ9RHo3GFlSbbAvRL08knfKty_iX64SHv6hwM7gix5WR2IRV0XOGpClIQ/exec";
@@ -185,36 +223,35 @@ const POLL = {
 
 <div class="poll">
   <div class="poll-question" id="poll-question"></div>
-  <div class="poll-body">
 
-    <div id="loading-view">
-      <div class="skeleton-bar"></div>
-      <div class="skeleton-bar"></div>
-      <div class="skeleton-bar"></div>
-      <div class="skeleton-bar"></div>
+  <!-- Skeleton — shown while waiting for uid + backend -->
+  <div id="loading-view">
+    <div class="options" id="skel-options">
+      <!-- JS fills these to match real option count -->
     </div>
-
-    <div id="vote-view" style="display:none">
-      <div class="options" id="options-list"></div>
-      <button class="submit-btn" id="submit-btn" disabled onclick="submitVote()">Submit answer</button>
-    </div>
-
-    <div id="results-view" style="display:none">
-      <div class="results" id="results-list"></div>
-      <p class="total-note" id="total-note"></p>
-      <div class="thanks" id="thanks-msg" style="display:none">
-        ✓ Thanks for sharing your view!
-      </div>
-      <p class="voted-note" id="voted-note" style="display:none">
-        You've already responded to this poll.
-      </p>
-    </div>
-
-    <div id="error-view" style="display:none">
-      <div class="error-banner" id="error-msg"></div>
-    </div>
-
+    <div class="skel skel-submit"></div>
   </div>
+
+  <!-- Vote view -->
+  <div id="vote-view" style="display:none">
+    <div class="options" id="options-list"></div>
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitVote()">Submit answer</button>
+    <div id="vote-error-inline" class="error-banner" style="display:none"></div>
+  </div>
+
+  <!-- Results view -->
+  <div id="results-view" style="display:none">
+    <div class="results" id="results-list"></div>
+    <p class="total-note" id="total-note"></p>
+    <!-- Single status line — same height as submit button, no layout shift -->
+    <div class="status-line" id="status-line" style="display:none"></div>
+  </div>
+
+  <!-- Error view -->
+  <div id="error-view" style="display:none">
+    <div class="error-banner" id="error-msg"></div>
+  </div>
+
 </div>
 
 
@@ -223,10 +260,23 @@ const POLL = {
 
   var intakeId  = new URLSearchParams(window.location.search).get("intake") || null;
   var uid       = null;
-  var pollReady = false;   // true once load request has been sent
+  var uidReady  = false;
+  var hasVoted  = false;
   var selected  = null;
 
+  // ── SET QUESTION ──────────────────────────────────────
   document.getElementById("poll-question").textContent = POLL.question;
+
+  // ── BUILD SKELETON matching option count ──────────────
+  // Skeleton mirrors real options so height never changes
+  var skelList = document.getElementById("skel-options");
+  POLL.options.forEach(function() {
+    var s = document.createElement("div");
+    s.className = "skel skel-option";
+    skelList.appendChild(s);
+  });
+
+  // ── BUILD REAL OPTIONS ────────────────────────────────
   buildOptions();
 
   if (!intakeId) {
@@ -234,42 +284,37 @@ const POLL = {
     return;
   }
 
-  // ── STEP 1: Try URL param immediately ────────────────
-  // Works for direct browser testing: ?uid=testuser123
+  // ── GET USER ID ───────────────────────────────────────
+  // Priority 1: URL param — instant, good for testing
   var urlUid = new URLSearchParams(window.location.search).get("uid");
   if (urlUid) {
-    uid = urlUid;
-    loadPoll();
-    return;
+    uid      = urlUid;
+    uidReady = true;
+    checkVoteStatus();
+  } else {
+    // Priority 2: postMessage from Moodle footer script
+    window.addEventListener("message", function(event) {
+      if (!event.data || event.data.type !== "moodleUserId") return;
+      if (uidReady) return;
+      uid      = String(event.data.userId);
+      uidReady = true;
+      checkVoteStatus();
+    });
+
+    // Priority 3: fallback after 3s — show poll as anonymous
+    setTimeout(function() {
+      if (uidReady) return;
+      uid      = "anonymous";
+      uidReady = true;
+      checkVoteStatus();
+    }, 3000);
   }
 
-  // ── STEP 2: Listen for postMessage from Moodle ───────
-  // Moodle Additional HTML script sends: { type: 'moodleUserId', userId: 26 }
-  window.addEventListener("message", function(event) {
-    // Only accept messages containing moodleUserId
-    if (!event.data || !event.data.type || event.data.type !== "moodleUserId") return;
-    if (pollReady) return; // already loaded — ignore duplicates
-
-    uid = String(event.data.userId);
-    loadPoll();
-  });
-
-  // ── STEP 3: Fallback after 3 seconds ─────────────────
-  // If no postMessage arrives, proceed as anonymous
-  // This ensures the poll always loads even if the
-  // Additional HTML script hasn't been added yet
-  setTimeout(function() {
-    if (pollReady) return;
-    uid = "anonymous";
-    loadPoll();
-  }, 3000);
-
-
-  // ── LOAD POLL ─────────────────────────────────────────
-  function loadPoll() {
-    if (pollReady) return;
-    pollReady = true;
-
+  // ── CHECK VOTE STATUS (background) ───────────────────
+  // Skeleton shows while this runs
+  // If already voted → show results
+  // If not → show poll options
+  function checkVoteStatus() {
     fetch(SCRIPT_URL, {
       method: "POST",
       body:   JSON.stringify({
@@ -282,7 +327,8 @@ const POLL = {
     .then(function(data) {
       hide("loading-view");
       if (!data.ok) {
-        showError(data.error || "Could not load poll. Please try again later.");
+        // Show poll options anyway — better than an error for learner
+        show("vote-view");
         return;
       }
       if (data.voted) {
@@ -292,8 +338,9 @@ const POLL = {
       }
     })
     .catch(function() {
+      // On error show poll — learner can still try to vote
       hide("loading-view");
-      showError("Could not reach the server. Please check your connection.");
+      show("vote-view");
     });
   }
 
@@ -318,40 +365,58 @@ const POLL = {
   }
 
 
-  // ── SUBMIT VOTE ───────────────────────────────────────
+  // ── SUBMIT VOTE — optimistic ──────────────────────────
   window.submitVote = function() {
     if (selected === null) return;
 
-    var btn = document.getElementById("submit-btn");
-    btn.disabled    = true;
-    btn.textContent = "Submitting...";
+    // If UID not ready yet — wait and retry once
+    if (!uidReady) {
+      var btn = document.getElementById("submit-btn");
+      btn.textContent = "Please wait...";
+      btn.disabled    = true;
+      setTimeout(function() {
+        btn.textContent = "Submit answer";
+        btn.disabled    = false;
+      }, 1000);
+      return;
+    }
+
+    var chosenOption = POLL.options[selected];
+    hasVoted = true;
+
+    // Disable immediately
+    document.getElementById("submit-btn").disabled = true;
     document.querySelectorAll(".option-btn").forEach(function(b) { b.disabled = true; });
 
+    // ── OPTIMISTIC: show results instantly ───────────
+    // Use local counts (1 vote for chosen) while backend confirms
+    var optimisticCounts = {};
+    POLL.options.forEach(function(opt) {
+      optimisticCounts[opt] = (opt === chosenOption) ? 1 : 0;
+    });
+    renderResults(optimisticCounts, 1, true, chosenOption);
+
+    // ── BACKGROUND: confirm with backend ─────────────
     fetch(SCRIPT_URL, {
       method: "POST",
       body:   JSON.stringify({
         action:   "vote",
         intakeId: intakeId,
-        option:   POLL.options[selected],
+        option:   chosenOption,
         uid:      uid
       })
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (data.ok) {
-        renderResults(data.counts, data.total, !data.already, POLL.options[selected]);
-      } else {
-        showVoteError(data.error || "Could not save your vote. Please try again.");
-        btn.disabled    = false;
-        btn.textContent = "Submit answer";
-        document.querySelectorAll(".option-btn").forEach(function(b) { b.disabled = false; });
+      if (data.ok && data.counts) {
+        // Silently update bars with real numbers
+        updateBars(data.counts, data.total);
+        document.getElementById("total-note").textContent =
+          data.total + " response" + (data.total !== 1 ? "s" : "") + " so far";
       }
     })
     .catch(function() {
-      showVoteError("Could not reach the server. Please check your connection.");
-      btn.disabled    = false;
-      btn.textContent = "Submit answer";
-      document.querySelectorAll(".option-btn").forEach(function(b) { b.disabled = false; });
+      // Silent fail — optimistic results stay
     });
   };
 
@@ -362,20 +427,21 @@ const POLL = {
     var safeTotal = total || 0;
     box.innerHTML = "";
 
-    POLL.options.forEach(function(opt) {
+    POLL.options.forEach(function(opt, idx) {
       var votes = (counts && counts[opt]) ? counts[opt] : 0;
       var pct   = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
       var mine  = opt === myAnswer;
 
       var row = document.createElement("div");
       row.className = "result-row";
+      row.setAttribute("data-idx", idx);
       row.innerHTML =
         '<div class="result-label' + (mine ? " mine" : "") + '">' +
           (mine ? "✓ " : "") + opt +
         '</div>' +
         '<div class="bar-container">' +
           '<div class="bar-track">' +
-            '<div class="bar-fill" style="width:' + pct + '%">' +
+            '<div class="bar-fill" style="width:0%">' +
               '<span class="inner-number">' + votes + '</span>' +
             '</div>' +
           '</div>' +
@@ -386,12 +452,50 @@ const POLL = {
 
     document.getElementById("total-note").textContent =
       safeTotal + " response" + (safeTotal !== 1 ? "s" : "") + " so far";
-    document.getElementById("thanks-msg").style.display = justVoted ? "flex"  : "none";
-    document.getElementById("voted-note").style.display = justVoted ? "block" : "none";
+
+    // Single status line — replaces submit button space exactly
+    var statusLine = document.getElementById("status-line");
+    statusLine.textContent = justVoted
+      ? "You've responded to this poll."
+      : "You've responded to this poll.";
+    statusLine.style.display = "flex";
 
     hide("loading-view");
     hide("vote-view");
     show("results-view");
+
+    // Animate bars after paint
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        box.querySelectorAll(".result-row").forEach(function(row, idx) {
+          var opt   = POLL.options[idx];
+          var votes = (counts && counts[opt]) ? counts[opt] : 0;
+          var pct   = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
+          var bar   = row.querySelector(".bar-fill");
+          if (bar) bar.style.width = pct + "%";
+        });
+      });
+    });
+  }
+
+
+  // ── UPDATE BARS SILENTLY ──────────────────────────────
+  // Called after backend confirms — updates numbers without re-rendering
+  function updateBars(counts, total) {
+    var safeTotal = total || 0;
+    document.querySelectorAll(".result-row").forEach(function(row, idx) {
+      var opt   = POLL.options[idx];
+      var votes = (counts && counts[opt]) ? counts[opt] : 0;
+      var pct   = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
+
+      var bar   = row.querySelector(".bar-fill");
+      var num   = row.querySelector(".inner-number");
+      var pctEl = row.querySelector(".result-pct");
+
+      if (bar)   bar.style.width   = pct + "%";
+      if (num)   num.textContent   = votes;
+      if (pctEl) pctEl.textContent = pct + "%";
+    });
   }
 
 
@@ -404,18 +508,6 @@ const POLL = {
     hide("vote-view");
     document.getElementById("error-msg").textContent = msg;
     show("error-view");
-  }
-
-  function showVoteError(msg) {
-    var el = document.getElementById("vote-error-inline");
-    if (!el) {
-      el           = document.createElement("div");
-      el.id        = "vote-error-inline";
-      el.className = "error-banner";
-      document.getElementById("vote-view").appendChild(el);
-    }
-    el.textContent   = msg;
-    el.style.display = "block";
   }
 
 })();
