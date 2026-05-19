@@ -22,7 +22,7 @@
     padding: 16px;
   }
 
-  /* ── Poll wrapper — Perfect size to enclose everything safely inside the block ── */
+  /* ── Poll wrapper — Perfectly uniform, balanced spacing container ── */
   .poll {
     width: 100%;
     max-width: 600px;
@@ -32,7 +32,7 @@
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 24px;
-    height: 455px; /* Expanded slightly to ensure the footer text line never clips */
+    height: 440px; /* Secure height to ensure everything sits beautifully inside */
     display: flex;
     flex-direction: column;
   }
@@ -42,17 +42,15 @@
     font-weight: 600;
     color: var(--text);
     line-height: 1.4;
-    margin-bottom: 20px;
-    height: 52px;
+    margin-bottom: 12px; /* Pulls options and text tighter together */
+    min-height: 52px;
   }
 
-  /* ── Structural Containers ── */
-  #loading-view, #vote-view, #results-view {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 335px;
-  }
+  /* ── Structural Layout Views (Safely using Block to prevent JS runtime failures) ── */
+  #loading-view { display: block; }
+  #vote-view { display: none; }
+  #results-view { display: none; }
+  #error-view { display: none; }
 
   .options, .results { 
     display: flex; 
@@ -73,6 +71,7 @@
   .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .submit-btn {
+    margin-top: 12px; /* Even margin distribution */
     width: 100%; padding: 12px;
     background: var(--brand); color: #fff; border: none;
     border-radius: var(--radius); font-weight: 600; cursor: pointer;
@@ -121,12 +120,13 @@
   .inner-number { color: white; font-size: 11px; padding-right: 6px; }
   .result-pct { font-size: 14px; min-width: 38px; text-align: right; font-weight: 500; color: var(--text); }
 
-  /* ── Minimalist Text Footer (Clean sentence tracking) ── */
+  /* ── Minimalist Clean Sentence Footer text ── */
   .footer-text-line {
+    margin-top: 12px; /* Exactly matches submit button margin top */
     font-size: 13px;
     color: var(--text-muted);
     text-align: center;
-    height: 44px; /* Perfectly occupies the same footprint as the vote button */
+    height: 44px; /* Matches submit button footprint */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -140,8 +140,9 @@
     background-size: 200% 100%;
     animation: shimmer 1.2s infinite;
   }
-  .skel-option { height: 74px; }
-  .skel-submit { height: 44px; }
+  .skel-option { height: 50px; margin-bottom: 10px; }
+  .skel-option:last-child { margin-bottom: 0; }
+  .skel-submit { height: 44px; margin-top: 12px; }
 
   @keyframes shimmer {
     0%   { background-position: 200% 0; }
@@ -174,17 +175,17 @@ const POLL = {
   <div class="poll-question" id="poll-question"></div>
 
   <div id="loading-view">
-    <div class="options" id="skel-options"></div>
+    <div id="skel-options"></div>
     <div class="skel skel-submit"></div>
   </div>
 
-  <div id="vote-view" style="display:none">
+  <div id="vote-view">
     <div class="options" id="options-list"></div>
     <button class="submit-btn" id="submit-btn" disabled onclick="submitVote()">Submit answer</button>
     <div id="vote-error-inline" class="error-banner" style="display:none"></div>
   </div>
 
-  <div id="results-view" style="display:none">
+  <div id="results-view">
     <div class="results" id="results-list"></div>
     <div class="footer-text-line">
       <span>You've responded to this poll.</span>
@@ -192,7 +193,7 @@ const POLL = {
     </div>
   </div>
 
-  <div id="error-view" style="display:none">
+  <div id="error-view">
     <div class="error-banner" id="error-msg"></div>
   </div>
 </div>
@@ -351,9 +352,10 @@ const POLL = {
     });
   }
 
-  // Flex layouts display
-  function show(id) { document.getElementById(id).style.display = "flex"; }
+  // Back to original block show/hide mechanics to guarantee script execution safety
+  function show(id) { document.getElementById(id).style.display = "block"; }
   function hide(id) { document.getElementById(id).style.display = "none"; }
+  
   function showError(msg) {
     hide("loading-view"); hide("vote-view");
     document.getElementById("error-msg").textContent = msg; show("error-view");
