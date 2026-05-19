@@ -44,13 +44,10 @@
     margin-bottom: 20px; 
   }
 
-  #loading-view, #vote-view, #results-view {
-    display: none; 
-    flex-direction: column;
-    flex-grow: 1;
-  }
-
-  #loading-view { display: flex; } 
+  #loading-view { display: block; }
+  #vote-view { display: none; }
+  #results-view { display: none; }
+  #error-view { display: none; }
 
   .options, .results { 
     display: flex; 
@@ -152,9 +149,8 @@
   .error-banner {
     padding: 16px; background: #fdf3f2; border: 1px solid #e8b4b0;
     border-radius: var(--radius); font-size: 14px; color: #7a2020;
-    line-height: 1.5; text-align: center;
+    line-height: 1.5; text-align: center; margin-top: 16px;
   }
-  #error-view { display: none; flex-grow: 1; align-items: center; justify-content: center; }
 </style>
 </head>
 <body>
@@ -354,5 +350,15 @@ const POLL = {
     });
   }
 
-  function show(id) { document.getElementById(id).style.display = "flex"; }
-  function hide(id) { document.getElementById(id).style.display = "none";
+  function show(id) { document.getElementById(id).style.display = "block"; }
+  function hide(id) { document.getElementById(id).style.display = "none"; }
+  
+  function showError(msg) {
+    hide("loading-view"); hide("vote-view");
+    document.getElementById("error-msg").innerHTML = msg + "<br>Please contact the help desk if you are experiencing an issue."; 
+    show("error-view");
+  }
+})();
+</script>
+</body>
+</html>
