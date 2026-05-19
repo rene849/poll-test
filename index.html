@@ -22,7 +22,7 @@
     padding: 16px;
   }
 
-  /* ── Poll wrapper — Fixed height to completely eliminate Moodle iframe jumps ── */
+  /* ── Poll wrapper — Perfect size to enclose everything safely inside the block ── */
   .poll {
     width: 100%;
     max-width: 600px;
@@ -32,7 +32,7 @@
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 24px;
-    height: 430px; /* Rigidly uniform container height */
+    height: 455px; /* Expanded slightly to ensure the footer text line never clips */
     display: flex;
     flex-direction: column;
   }
@@ -50,8 +50,8 @@
   #loading-view, #vote-view, #results-view {
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Evenly distributes elements inside the 300px block */
-    height: 310px;
+    justify-content: space-between;
+    height: 335px;
   }
 
   .options, .results { 
@@ -121,16 +121,16 @@
   .inner-number { color: white; font-size: 11px; padding-right: 6px; }
   .result-pct { font-size: 14px; min-width: 38px; text-align: right; font-weight: 500; color: var(--text); }
 
-  /* ── Minimalist Text Footer (Saves Space, Prevents Shifting) ── */
+  /* ── Minimalist Text Footer (Clean sentence tracking) ── */
   .footer-text-line {
     font-size: 13px;
     color: var(--text-muted);
     text-align: center;
-    height: 44px; /* Matches the exact height footprint of the submit button */
+    height: 44px; /* Perfectly occupies the same footprint as the vote button */
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
   }
 
   /* ── Loading / Skeleton ── */
@@ -188,8 +188,7 @@ const POLL = {
     <div class="results" id="results-list"></div>
     <div class="footer-text-line">
       <span>You've responded to this poll.</span>
-      <span>•</span>
-      <span id="total-note">0 responses so far</span>
+      <span id="total-note">0 responses so far.</span>
     </div>
   </div>
 
@@ -290,7 +289,7 @@ const POLL = {
     .then(function(data) {
       if (data.ok && data.counts) {
         updateBars(data.counts, data.total);
-        document.getElementById("total-note").textContent = data.total + " responses so far";
+        document.getElementById("total-note").textContent = data.total + " responses so far.";
       }
     })
     .catch(function() {});
@@ -319,7 +318,7 @@ const POLL = {
       box.appendChild(row);
     });
 
-    document.getElementById("total-note").textContent = safeTotal + " responses so far";
+    document.getElementById("total-note").textContent = safeTotal + " responses so far.";
     hide("loading-view");
     hide("vote-view");
     show("results-view");
@@ -352,6 +351,7 @@ const POLL = {
     });
   }
 
+  // Flex layouts display
   function show(id) { document.getElementById(id).style.display = "flex"; }
   function hide(id) { document.getElementById(id).style.display = "none"; }
   function showError(msg) {
