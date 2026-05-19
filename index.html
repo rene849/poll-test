@@ -31,7 +31,7 @@
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 24px;
-    height: 480px; /* Increased to cleanly enclose the footer text line */
+    min-height: 360px; /* Allows the first screen to be short, expands naturally for results */
     display: flex;
     flex-direction: column;
   }
@@ -123,8 +123,8 @@
   .result-pct { font-size: 14px; min-width: 38px; text-align: right; font-weight: 500; color: var(--text); }
 
   .footer-text-line {
-    margin-top: 16px; /* Controlled explicit margin */
-    margin-bottom: 4px; /* Secures spacing inside the white card boundary */
+    margin-top: 24px; /* Creates clean space below the final result card */
+    margin-bottom: 4px; 
     font-size: 13px;
     color: var(--text-muted);
     text-align: center;
