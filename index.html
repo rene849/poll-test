@@ -31,7 +31,7 @@
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 24px;
-    height: 460px; /* Increased to fit results and footer cleanly */
+    height: 480px; /* Increased to cleanly enclose the footer text line */
     display: flex;
     flex-direction: column;
   }
@@ -123,7 +123,8 @@
   .result-pct { font-size: 14px; min-width: 38px; text-align: right; font-weight: 500; color: var(--text); }
 
   .footer-text-line {
-    margin-top: auto; /* Pushes text up inside the padding zone cleanly */
+    margin-top: 16px; /* Controlled explicit margin */
+    margin-bottom: 4px; /* Secures spacing inside the white card boundary */
     font-size: 13px;
     color: var(--text-muted);
     text-align: center;
@@ -160,4 +161,209 @@
 <body>
 
 <script>
-const SCRIPT
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI2asjsvXhJ9RHo3GFlSbbAvRL08knfKty_iX64SHv6hwM7gix5WR2IRV0XOGpClIQ/exec";
+
+const POLL = {
+  question: "Which learning format do you find most effective?",
+  options: [
+    "Short videos (under 5 mins)",
+    "Interactive scenarios",
+    "Written guides and job aids",
+    "Live virtual sessions"
+  ]
+};
+</script>
+
+<div class="poll">
+  <div class="poll-question" id="poll-question"></div>
+
+  <div id="loading-view">
+    <div id="skel-options"></div>
+    <div class="skel skel-submit"></div>
+  </div>
+
+  <div id="vote-view">
+    <div class="options" id="options-list"></div>
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitVote()">Submit answer</button>
+    <div id="vote-error-inline" class="error-banner" style="display:none"></div>
+  </div>
+
+  <div id="results-view">
+    <div class="results" id="results-list"></div>
+    <div class="footer-text-line">
+      <span>You've responded to this poll.</span>
+      <span id="total-note">0 responses so far.</span>
+    </div>
+  </div>
+
+  <div id="error-view">
+    <div class="error-banner" id="error-msg"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var intakeId  = new URLSearchParams(window.location.search).get("intake") || null;
+  var uid       = null;
+  var uidReady  = false;
+  var hasVoted  = false;
+  var selected  = null;
+
+  document.getElementById("poll-question").textContent = POLL.question;
+
+  var skelList = document.getElementById("skel-options");
+  POLL.options.forEach(function() {
+    var s = document.createElement("div");
+    s.className = "skel skel-option";
+    skelList.appendChild(s);
+  });
+
+  buildOptions();
+
+  if (!intakeId) {
+    showError("This poll is currently unavailable.");
+    return;
+  }
+
+  var urlUid = new URLSearchParams(window.location.search).get("uid");
+  if (urlUid) {
+    uid = urlUid; uidReady = true; checkVoteStatus();
+  } else {
+    window.addEventListener("message", function(event) {
+      if (!event.data || event.data.type !== "moodleUserId") return;
+      if (uidReady) return;
+      uid = String(event.data.userId); uidReady = true; checkVoteStatus();
+    });
+    setTimeout(function() {
+      if (uidReady) return;
+      uid = "anonymous"; uidReady = true; checkVoteStatus();
+    }, 3000);
+  }
+
+  function checkVoteStatus() {
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "load", intakeId: intakeId, uid: uid })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      hide("loading-view");
+      if (!data.ok) { show("vote-view"); return; }
+      if (data.voted) { renderResults(data.counts, data.total, false, data.answer); } 
+      else { show("vote-view"); }
+    })
+    .catch(function() { hide("loading-view"); show("vote-view"); });
+  }
+
+  function buildOptions() {
+    var list = document.getElementById("options-list");
+    POLL.options.forEach(function(opt, i) {
+      var btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.textContent = opt;
+      btn.addEventListener("click", function() {
+        selected = i;
+        document.querySelectorAll(".option-btn").forEach(function(b, idx) {
+          b.style.borderColor = (idx === i) ? "var(--brand)" : "#ddd";
+          b.style.background  = (idx === i) ? "#f4f6ff"      : "#fff";
+        });
+        document.getElementById("submit-btn").disabled = false;
+      });
+      list.appendChild(btn);
+    });
+  }
+
+  window.submitVote = function() {
+    if (selected === null || !uidReady) return;
+    var chosenOption = POLL.options[selected];
+    hasVoted = true;
+
+    document.getElementById("submit-btn").disabled = true;
+    document.querySelectorAll(".option-btn").forEach(function(b) { b.disabled = true; });
+
+    var optimisticCounts = {};
+    POLL.options.forEach(function(opt) { optimisticCounts[opt] = (opt === chosenOption) ? 1 : 0; });
+    renderResults(optimisticCounts, 1, true, chosenOption);
+
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "vote", intakeId: intakeId, option: chosenOption, uid: uid })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok && data.counts) {
+        updateBars(data.counts, data.total);
+        document.getElementById("total-note").textContent = data.total + " responses so far.";
+      }
+    })
+    .catch(function() {});
+  };
+
+  function renderResults(counts, total, justVoted, myAnswer) {
+    var box = document.getElementById("results-list");
+    var safeTotal = total || 0;
+    box.innerHTML = "";
+
+    POLL.options.forEach(function(opt, idx) {
+      var votes = (counts && counts[opt]) ? counts[opt] : 0;
+      var pct   = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
+      var mine  = opt === myAnswer;
+
+      var row = document.createElement("div");
+      row.className = "result-row";
+      row.innerHTML =
+        '<div class="result-label' + (mine ? " mine" : "") + '">' + (mine ? "✓ " : "") + opt + '</div>' +
+        '<div class="bar-container">' +
+          '<div class="bar-track">' +
+            '<div class="bar-fill" style="width:0%"><span class="inner-number">' + votes + '</span></div>' +
+          '</div>' +
+          '<div class="result-pct">' + pct + '%</div>' +
+        '</div>';
+      box.appendChild(row);
+    });
+
+    document.getElementById("total-note").textContent = safeTotal + " responses so far.";
+    hide("loading-view");
+    hide("vote-view");
+    show("results-view");
+
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        box.querySelectorAll(".result-row").forEach(function(row, idx) {
+          var opt = POLL.options[idx];
+          var votes = (counts && counts[opt]) ? counts[opt] : 0;
+          var pct = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
+          var bar = row.querySelector(".bar-fill");
+          if (bar) bar.style.width = pct + "%";
+        });
+      });
+    });
+  }
+
+  function updateBars(counts, total) {
+    var safeTotal = total || 0;
+    document.querySelectorAll(".result-row").forEach(function(row, idx) {
+      var opt = POLL.options[idx];
+      var votes = (counts && counts[opt]) ? counts[opt] : 0;
+      var pct = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
+      var bar = row.querySelector(".bar-fill");
+      var num = row.querySelector(".inner-number");
+      var pctEl = row.querySelector(".result-pct");
+      if (bar) bar.style.width = pct + "%";
+      if (num) num.textContent = votes;
+      if (pctEl) pctEl.textContent = pct + "%";
+    });
+  }
+
+  function show(id) { document.getElementById(id).style.display = "flex"; }
+  function hide(id) { document.getElementById(id).style.display = "none"; }
+  
+  function showError(msg) {
+    hide("loading-view"); hide("vote-view");
+    document.getElementById("error-msg").innerHTML = msg + "<br>Please contact the help desk if you are experiencing an issue."; 
+    show("error-view");
+  }
+})();
+</script>
+</body>
+</html>
