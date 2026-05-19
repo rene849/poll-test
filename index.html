@@ -20,10 +20,9 @@
 
   body {
     padding: 16px;
-    /* No flex centering — keeps height predictable */
   }
 
-  /* ── Poll wrapper — fixed height, never expands ── */
+  /* ── Poll wrapper — Strict fixed height to stop Moodle iframe jumps ── */
   .poll {
     width: 100%;
     max-width: 600px;
@@ -33,8 +32,7 @@
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 24px;
-    /* Fixed height prevents iframe resize — adjust to match your iframe height */
-    min-height: 360px;
+    height: 410px; /* Perfectly encloses both states */
     display: flex;
     flex-direction: column;
   }
@@ -45,37 +43,17 @@
     color: var(--text);
     line-height: 1.4;
     margin-bottom: 20px;
-    /* Reserve space so layout doesn't shift when question loads */
-    min-height: 52px;
+    height: 52px;
   }
 
-  /* ── Loading state — shown while waiting for uid/backend ── */
-  #loading-view {
+  /* ── Views — Identical sizing ── */
+  #loading-view, #vote-view, #results-view {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    flex: 1;
+    height: 300px;
   }
 
-  .skel {
-    border-radius: var(--radius);
-    background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.2s infinite;
-  }
-
-  /* Match option button height */
-  .skel-option { height: 50px; }
-  /* Match submit button height */
-  .skel-submit { height: 44px; margin-top: 6px; }
-
-  @keyframes shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  /* ── Options ── */
-  #vote-view { display: flex; flex-direction: column; flex: 1; }
+  /* ── Vote View Styling ── */
   .options { display: flex; flex-direction: column; gap: 10px; }
 
   .option-btn {
@@ -84,10 +62,8 @@
     background: var(--bg); cursor: pointer; font-size: 15px;
     color: var(--text); width: 100%; transition: 0.15s;
     font-family: var(--font);
-    /* Fixed height so layout matches skeleton */
     height: 50px;
   }
-
   .option-btn:hover  { background: #f9f9f9; border-color: var(--brand); }
   .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -99,49 +75,32 @@
     transition: opacity 0.2s, background 0.15s;
     height: 44px;
   }
-
   .submit-btn:hover    { background: #1a2a6e; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* ── Status line — replaces submit button space after voting ── */
-  /* Same height as submit button so layout never shifts */
-  .status-line {
-    margin-top: 16px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    color: var(--text-muted);
-    border-radius: var(--radius);
-    background: var(--bar-bg);
+  /* ── The Magic Balancer ── */
+  /* This occupies the exact missing pixel space during voting, then vanishes */
+  .spacer-balance {
+    height: 52px; 
+    width: 100%;
   }
 
-  /* ── Error ── */
-  .error-banner {
-    padding: 10px 14px;
-    background: #fdf3f2; border: 1px solid #e8b4b0;
-    border-radius: var(--radius); font-size: 13px;
-    color: #7a2020; line-height: 1.5; margin-top: 10px;
-  }
-
-  /* ── Results ── */
-  #results-view { display: flex; flex-direction: column; flex: 1; }
+  /* ── Results View Styling ── */
   .results { display: flex; flex-direction: column; gap: 10px; }
 
   .result-row {
     border: 1px solid #e0e0e0;
-    padding: 12px 15px;
+    padding: 10px 14px;
     display: flex;
     flex-direction: column;
     border-radius: var(--radius);
+    height: 74px; /* Stacked layout requires 74px */
   }
 
   .result-label {
-    font-size: 15px; font-weight: 500;
-    padding-bottom: 0.5rem; color: var(--text);
+    font-size: 14px; font-weight: 500;
+    padding-bottom: 6px; color: var(--text);
   }
-
   .result-label.mine { color: var(--brand); font-weight: 700; }
 
   .bar-container {
@@ -150,7 +109,7 @@
   }
 
   .bar-track {
-    flex-grow: 1; height: 36px;
+    flex-grow: 1; height: 20px;
     background: var(--bar-bg); position: relative;
     border-radius: var(--radius);
     overflow: hidden;
@@ -160,51 +119,54 @@
     height: 100%; background: var(--brand);
     width: 0%; transition: width 0.5s cubic-bezier(0.1,0.5,0.5,1);
     display: flex; align-items: center;
-    justify-content: flex-end; min-width: 28px;
+    justify-content: flex-end; min-width: 24px;
   }
 
-  .inner-number {
-    color: white; font-size: 13px; padding-right: 0.5rem;
-  }
+  .inner-number { color: white; font-size: 11px; padding-right: 6px; }
+  .result-pct { font-size: 14px; min-width: 38px; text-align: right; font-weight: 500; color: var(--text); }
 
-  .result-pct {
-    font-size: 15px; min-width: 42px;
-    text-align: right; font-weight: 500; color: var(--text);
-  }
-
+  /* ── Footer Elements ── */
   .total-note {
     margin-top: 8px; font-size: 11px;
     color: var(--text-muted); text-align: right;
+    height: 14px;
   }
 
-  @media (max-width: 480px) {
-    .poll { padding: 16px; }
-    .poll-question { font-size: 16px; }
-    .option-btn { font-size: 14px; height: 46px; }
-    .bar-track { height: 32px; }
+  .status-line {
+    margin-top: 12px;
+    height: 44px; /* Matches submit button height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-radius: var(--radius);
+    background: var(--bar-bg);
+  }
+
+  /* ── Loading / Skeleton ── */
+  .skel {
+    border-radius: var(--radius);
+    background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s infinite;
+  }
+  .skel-option { height: 74px; } /* Matches result row height */
+  .skel-submit { height: 44px; margin-top: 16px; }
+
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .error-banner {
+    padding: 10px 14px; background: #fdf3f2; border: 1px solid #e8b4b0;
+    border-radius: var(--radius); font-size: 13px; color: #7a2020; margin-top: 10px;
   }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════
-     POLL CONFIG — only edit these values:
-     1. SCRIPT_URL — set once, never changes
-     2. POLL question + options — only if content changes
-
-     USER ID priority:
-     1. postMessage from Moodle footer script
-     2. ?uid= URL param (direct browser testing)
-     3. "anonymous" after 3s fallback
-
-     Moodle iframe:
-     <iframe src="https://rene849.github.io/poll-test/?intake=Jun2026"
-       style="width:100%; max-width:640px; height:420px; border:none; display:block; margin:0 auto;"
-       title="Poll" allowfullscreen></iframe>
-
-     IMPORTANT: iframe height should match .poll min-height + body padding
-     Current: min-height 360px + 32px padding = ~420px total
-     ═══════════════════════════════════════════════════════ -->
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI2asjsvXhJ9RHo3GFlSbbAvRL08knfKty_iX64SHv6hwM7gix5WR2IRV0XOGpClIQ/exec";
 
@@ -218,57 +180,43 @@ const POLL = {
   ]
 };
 </script>
-<!-- ══════════════ END CONFIG ═══════════════════════════ -->
-
 
 <div class="poll">
   <div class="poll-question" id="poll-question"></div>
 
-  <!-- Skeleton — shown while waiting for uid + backend -->
   <div id="loading-view">
-    <div class="options" id="skel-options">
-      <!-- JS fills these to match real option count -->
-    </div>
+    <div class="options" id="skel-options"></div>
     <div class="skel skel-submit"></div>
   </div>
 
-  <!-- Vote view -->
   <div id="vote-view" style="display:none">
     <div class="options" id="options-list"></div>
+    <div class="spacer-balance"></div>
     <button class="submit-btn" id="submit-btn" disabled onclick="submitVote()">Submit answer</button>
     <div id="vote-error-inline" class="error-banner" style="display:none"></div>
   </div>
 
-  <!-- Results view -->
   <div id="results-view" style="display:none">
     <div class="results" id="results-list"></div>
     <p class="total-note" id="total-note"></p>
-    <!-- Single status line — same height as submit button, no layout shift -->
-    <div class="status-line" id="status-line" style="display:none"></div>
+    <div class="status-line" id="status-line">You've responded to this poll.</div>
   </div>
 
-  <!-- Error view -->
   <div id="error-view" style="display:none">
     <div class="error-banner" id="error-msg"></div>
   </div>
-
 </div>
-
 
 <script>
 (function () {
-
   var intakeId  = new URLSearchParams(window.location.search).get("intake") || null;
   var uid       = null;
   var uidReady  = false;
   var hasVoted  = false;
   var selected  = null;
 
-  // ── SET QUESTION ──────────────────────────────────────
   document.getElementById("poll-question").textContent = POLL.question;
 
-  // ── BUILD SKELETON matching option count ──────────────
-  // Skeleton mirrors real options so height never changes
   var skelList = document.getElementById("skel-options");
   POLL.options.forEach(function() {
     var s = document.createElement("div");
@@ -276,81 +224,48 @@ const POLL = {
     skelList.appendChild(s);
   });
 
-  // ── BUILD REAL OPTIONS ────────────────────────────────
   buildOptions();
 
   if (!intakeId) {
-    showError("Poll configuration error — no intake ID in URL. Please contact your administrator.");
+    showError("Poll configuration error — no intake ID found.");
     return;
   }
 
-  // ── GET USER ID ───────────────────────────────────────
-  // Priority 1: URL param — instant, good for testing
   var urlUid = new URLSearchParams(window.location.search).get("uid");
   if (urlUid) {
-    uid      = urlUid;
-    uidReady = true;
-    checkVoteStatus();
+    uid = urlUid; uidReady = true; checkVoteStatus();
   } else {
-    // Priority 2: postMessage from Moodle footer script
     window.addEventListener("message", function(event) {
       if (!event.data || event.data.type !== "moodleUserId") return;
       if (uidReady) return;
-      uid      = String(event.data.userId);
-      uidReady = true;
-      checkVoteStatus();
+      uid = String(event.data.userId); uidReady = true; checkVoteStatus();
     });
-
-    // Priority 3: fallback after 3s — show poll as anonymous
     setTimeout(function() {
       if (uidReady) return;
-      uid      = "anonymous";
-      uidReady = true;
-      checkVoteStatus();
+      uid = "anonymous"; uidReady = true; checkVoteStatus();
     }, 3000);
   }
 
-  // ── CHECK VOTE STATUS (background) ───────────────────
-  // Skeleton shows while this runs
-  // If already voted → show results
-  // If not → show poll options
   function checkVoteStatus() {
     fetch(SCRIPT_URL, {
       method: "POST",
-      body:   JSON.stringify({
-        action:   "load",
-        intakeId: intakeId,
-        uid:      uid
-      })
+      body: JSON.stringify({ action: "load", intakeId: intakeId, uid: uid })
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
       hide("loading-view");
-      if (!data.ok) {
-        // Show poll options anyway — better than an error for learner
-        show("vote-view");
-        return;
-      }
-      if (data.voted) {
-        renderResults(data.counts, data.total, false, data.answer);
-      } else {
-        show("vote-view");
-      }
+      if (!data.ok) { show("vote-view"); return; }
+      if (data.voted) { renderResults(data.counts, data.total, false, data.answer); } 
+      else { show("vote-view"); }
     })
-    .catch(function() {
-      // On error show poll — learner can still try to vote
-      hide("loading-view");
-      show("vote-view");
-    });
+    .catch(function() { hide("loading-view"); show("vote-view"); });
   }
 
-
-  // ── BUILD OPTIONS ─────────────────────────────────────
   function buildOptions() {
     var list = document.getElementById("options-list");
     POLL.options.forEach(function(opt, i) {
       var btn = document.createElement("button");
-      btn.className   = "option-btn";
+      btn.className = "option-btn";
       btn.textContent = opt;
       btn.addEventListener("click", function() {
         selected = i;
@@ -364,66 +279,34 @@ const POLL = {
     });
   }
 
-
-  // ── SUBMIT VOTE — optimistic ──────────────────────────
   window.submitVote = function() {
-    if (selected === null) return;
-
-    // If UID not ready yet — wait and retry once
-    if (!uidReady) {
-      var btn = document.getElementById("submit-btn");
-      btn.textContent = "Please wait...";
-      btn.disabled    = true;
-      setTimeout(function() {
-        btn.textContent = "Submit answer";
-        btn.disabled    = false;
-      }, 1000);
-      return;
-    }
-
+    if (selected === null || !uidReady) return;
     var chosenOption = POLL.options[selected];
     hasVoted = true;
 
-    // Disable immediately
     document.getElementById("submit-btn").disabled = true;
     document.querySelectorAll(".option-btn").forEach(function(b) { b.disabled = true; });
 
-    // ── OPTIMISTIC: show results instantly ───────────
-    // Use local counts (1 vote for chosen) while backend confirms
     var optimisticCounts = {};
-    POLL.options.forEach(function(opt) {
-      optimisticCounts[opt] = (opt === chosenOption) ? 1 : 0;
-    });
+    POLL.options.forEach(function(opt) { optimisticCounts[opt] = (opt === chosenOption) ? 1 : 0; });
     renderResults(optimisticCounts, 1, true, chosenOption);
 
-    // ── BACKGROUND: confirm with backend ─────────────
     fetch(SCRIPT_URL, {
       method: "POST",
-      body:   JSON.stringify({
-        action:   "vote",
-        intakeId: intakeId,
-        option:   chosenOption,
-        uid:      uid
-      })
+      body: JSON.stringify({ action: "vote", intakeId: intakeId, option: chosenOption, uid: uid })
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data.ok && data.counts) {
-        // Silently update bars with real numbers
         updateBars(data.counts, data.total);
-        document.getElementById("total-note").textContent =
-          data.total + " response" + (data.total !== 1 ? "s" : "") + " so far";
+        document.getElementById("total-note").textContent = data.total + " responses so far";
       }
     })
-    .catch(function() {
-      // Silent fail — optimistic results stay
-    });
+    .catch(function() {});
   };
 
-
-  // ── RENDER RESULTS ────────────────────────────────────
   function renderResults(counts, total, justVoted, myAnswer) {
-    var box       = document.getElementById("results-list");
+    var box = document.getElementById("results-list");
     var safeTotal = total || 0;
     box.innerHTML = "";
 
@@ -434,84 +317,57 @@ const POLL = {
 
       var row = document.createElement("div");
       row.className = "result-row";
-      row.setAttribute("data-idx", idx);
       row.innerHTML =
-        '<div class="result-label' + (mine ? " mine" : "") + '">' +
-          (mine ? "✓ " : "") + opt +
-        '</div>' +
+        '<div class="result-label' + (mine ? " mine" : "") + '">' + (mine ? "✓ " : "") + opt + '</div>' +
         '<div class="bar-container">' +
           '<div class="bar-track">' +
-            '<div class="bar-fill" style="width:0%">' +
-              '<span class="inner-number">' + votes + '</span>' +
-            '</div>' +
+            '<div class="bar-fill" style="width:0%"><span class="inner-number">' + votes + '</span></div>' +
           '</div>' +
           '<div class="result-pct">' + pct + '%</div>' +
         '</div>';
       box.appendChild(row);
     });
 
-    document.getElementById("total-note").textContent =
-      safeTotal + " response" + (safeTotal !== 1 ? "s" : "") + " so far";
-
-    // Single status line — replaces submit button space exactly
-    var statusLine = document.getElementById("status-line");
-    statusLine.textContent = justVoted
-      ? "You've responded to this poll."
-      : "You've responded to this poll.";
-    statusLine.style.display = "flex";
-
+    document.getElementById("total-note").textContent = safeTotal + " responses so far";
     hide("loading-view");
     hide("vote-view");
     show("results-view");
 
-    // Animate bars after paint
     requestAnimationFrame(function() {
       requestAnimationFrame(function() {
         box.querySelectorAll(".result-row").forEach(function(row, idx) {
-          var opt   = POLL.options[idx];
+          var opt = POLL.options[idx];
           var votes = (counts && counts[opt]) ? counts[opt] : 0;
-          var pct   = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
-          var bar   = row.querySelector(".bar-fill");
+          var pct = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
+          var bar = row.querySelector(".bar-fill");
           if (bar) bar.style.width = pct + "%";
         });
       });
     });
   }
 
-
-  // ── UPDATE BARS SILENTLY ──────────────────────────────
-  // Called after backend confirms — updates numbers without re-rendering
   function updateBars(counts, total) {
     var safeTotal = total || 0;
     document.querySelectorAll(".result-row").forEach(function(row, idx) {
-      var opt   = POLL.options[idx];
+      var opt = POLL.options[idx];
       var votes = (counts && counts[opt]) ? counts[opt] : 0;
-      var pct   = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
-
-      var bar   = row.querySelector(".bar-fill");
-      var num   = row.querySelector(".inner-number");
+      var pct = safeTotal > 0 ? Math.round((votes / safeTotal) * 100) : 0;
+      var bar = row.querySelector(".bar-fill");
+      var num = row.querySelector(".inner-number");
       var pctEl = row.querySelector(".result-pct");
-
-      if (bar)   bar.style.width   = pct + "%";
-      if (num)   num.textContent   = votes;
+      if (bar) bar.style.width = pct + "%";
+      if (num) num.textContent = votes;
       if (pctEl) pctEl.textContent = pct + "%";
     });
   }
 
-
-  // ── HELPERS ───────────────────────────────────────────
-  function show(id) { document.getElementById(id).style.display = "block"; }
-  function hide(id) { document.getElementById(id).style.display = "none";  }
-
+  function show(id) { document.getElementById(id).style.display = "flex"; }
+  function hide(id) { document.getElementById(id).style.display = "none"; }
   function showError(msg) {
-    hide("loading-view");
-    hide("vote-view");
-    document.getElementById("error-msg").textContent = msg;
-    show("error-view");
+    hide("loading-view"); hide("vote-view");
+    document.getElementById("error-msg").textContent = msg; show("error-view");
   }
-
 })();
 </script>
-
 </body>
 </html>
