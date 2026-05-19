@@ -31,7 +31,7 @@
     background: var(--bg);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 24px;
-    height: 390px; 
+    height: 440px; 
     display: flex;
     flex-direction: column;
   }
@@ -77,6 +77,12 @@
   }
   .submit-btn:hover    { background: #1a2a6e; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Fills the gap on the voting screen so heights match identically */
+  .spacer-balance {
+    height: 80px;
+    width: 100%;
+  }
 
   .result-row {
     border: 1px solid #e0e0e0;
@@ -179,6 +185,7 @@ const POLL = {
 
   <div id="vote-view">
     <div class="options" id="options-list"></div>
+    <div class="spacer-balance"></div>
     <button class="submit-btn" id="submit-btn" disabled onclick="submitVote()">Submit answer</button>
     <div id="vote-error-inline" class="error-banner" style="display:none"></div>
   </div>
