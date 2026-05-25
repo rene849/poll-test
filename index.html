@@ -631,16 +631,27 @@ const POLL = {
 
 })();
 </script><script>
-      function sendHeight() {
-        window.parent.postMessage({
-          type: 'iframe-height',
-          height: document.body.scrollHeight
-        }, '*');
-      }
-      window.addEventListener('load', sendHeight);
-      window.addEventListener('resize', sendHeight);
-      var observer = new ResizeObserver(sendHeight);
-      observer.observe(document.body);
+    function sendHeight() {
+  window.parent.postMessage({
+    type: 'iframe-height',
+    height: document.body.scrollHeight
+  }, '*');
+}
+
+// Send immediately and keep retrying for 3 seconds
+window.addEventListener('load', sendHeight);
+window.addEventListener('resize', sendHeight);
+
+// Retry every 500ms for 3 seconds to catch late listeners
+var retryCount = 0;
+var retryInterval = setInterval(function() {
+  sendHeight();
+  retryCount++;
+  if (retryCount >= 6) clearInterval(retryInterval);
+}, 500);
+
+var observer = new ResizeObserver(sendHeight);
+observer.observe(document.body);
     </script>
   </body>
 </html>
