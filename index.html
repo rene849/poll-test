@@ -630,6 +630,19 @@ const POLL = {
   }
 
 })();
-</script>
+</script><script>
+      function sendHeight() {
+        window.parent.postMessage({
+          type: 'iframe-height',
+          height: document.body.scrollHeight
+        }, '*');
+      }
+      window.addEventListener('load', sendHeight);
+      window.addEventListener('resize', sendHeight);
+      var observer = new ResizeObserver(sendHeight);
+      observer.observe(document.body);
+    </script>
+  </body>
+</html>
 </body>
 </html>
