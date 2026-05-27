@@ -630,29 +630,47 @@ const POLL = {
   }
 
 })();
-</script><script>
-    function sendHeight() {
-  window.parent.postMessage({
-    type: 'iframe-height',
-    height: document.body.scrollHeight
-  }, '*');
-}
+</script>
+  
+ <script>
+(function() {
+  var lastHeight = 0;
+  var stableCount = 0;
 
-// Send immediately and keep retrying for 3 seconds
-window.addEventListener('load', sendHeight);
-window.addEventListener('resize', sendHeight);
+  function sendHeight() {
+    var currentHeight = document.body.scrollHeight;
+    if (currentHeight === lastHeight) {
+      stableCount++;
+      if (stableCount >= 3) return;
+    } else {
+      stableCount = 0;
+      lastHeight = currentHeight;
+    }
+    window.parent.postMessage({
+      type: 'iframe-height',
+      height: currentHeight
+    }, '*');
+  }
 
-// Retry every 500ms for 3 seconds to catch late listeners
-var retryCount = 0;
-var retryInterval = setInterval(function() {
-  sendHeight();
-  retryCount++;
-  if (retryCount >= 6) clearInterval(retryInterval);
-}, 500);
+  setTimeout(function() {
+    sendHeight();
+    var retryCount = 0;
+    var retryInterval = setInterval(function() {
+      sendHeight();
+      retryCount++;
+      if (retryCount >= 10) clearInterval(retryInterval);
+    }, 300);
+  }, 500);
 
-var observer = new ResizeObserver(sendHeight);
-observer.observe(document.body);
-    </script>
+  if (window.ResizeObserver) {
+    var observer = new ResizeObserver(function() {
+      stableCount = 0;
+      sendHeight();
+    });
+    observer.observe(document.body);
+  }
+})();
+</script>
   </body>
 </html>
 
