@@ -40,8 +40,6 @@
   ║  5 options → 550px                                           ║
   ╚══════════════════════════════════════════════════════════════╝
 -->
-
-
 <style>
   /* ── Design tokens ─────────────────────────────────────────────
      Change these variables to restyle the entire poll.
@@ -219,24 +217,21 @@
     background: var(--brand);
     width: 0%;
     transition: width 0.5s cubic-bezier(0.1,0.5,0.5,1);
-    position: relative;        /* absolute anchor base for text numbers */
-    display: block;            /* unbinds structural flex layouts causing whitespace gaps */
-    min-width: 24px;           /* ensures clear baseline size for low responses */
+    display: flex;
+    align-items: center;       /* Vertically centers numbers inside the bar */
+    justify-content: center;   /* Perfectly centers numbers horizontally within the blue area */
+    min-width: 24px;           /* Provides clean proportions for low/0% responses */
   }
 
   /* ── Vote count inside bar ─────────────────────────────────────
-     Positioning anchored directly to the right wall of the active blue track.
-     This completely removes the layout gap/padding artifact shown in the screenshot.
+     Line height set to 1 since flex container attributes handle the absolute 
+     vertical alignment flow across varying VLE viewports.
      ──────────────────────────────────────────────────────────── */
   .inner-number {
     color: white;
     font-size: 11px;
     font-weight: 600;
-    line-height: 20px;         /* Equal to track height token for seamless vertical centering */
-    position: absolute;        /* Locks layout tracking directly to parent boundaries */
-    right: 8px;                /* Explicit right margin alignment block */
-    top: 0;
-    display: inline-block;     /* Clears external text-flow wrappers */
+    line-height: 1;
     margin: 0;
     padding: 0;
   }
@@ -343,8 +338,8 @@ const POLL = {
   ]
 };
 </script>
-<div class="poll">
 
+<div class="poll">
   <div class="poll-question" id="poll-question"></div>
 
   <div id="loading-view">
@@ -371,76 +366,49 @@ const POLL = {
   <div id="error-view">
     <div class="error-banner" id="error-msg"></div>
   </div>
-
 </div>
-
 
 <script>
 (function () {
-
-  // ── State variables ──────────────────────────────────────────
   var intakeId = new URLSearchParams(window.location.search).get("intake") || null;
-  var uid      = null;    // Moodle user ID — set via postMessage or URL param
-  var uidReady = false;   // true once uid is resolved
-  var hasVoted = false;   // true once optimistic results are shown
-  var selected = null;    // index of selected option
+  var uid      = null;    
+  var uidReady = false;   
+  var hasVoted = false;   
+  var selected = null;    
 
-  // ── Initialise ───────────────────────────────────────────────
   document.getElementById("poll-question").textContent = POLL.question;
   buildSkeleton();
   buildOptions();
 
-  // Guard: no intake ID means the iframe URL is misconfigured
   if (!intakeId) {
     showError("Sorry, this poll is not working right now. Please use the chat icon to contact the student success team.");
     return;
   }
 
-  // ── Show vote options immediately ─────────────────────────────
-  // No skeleton wait — learner sees options instantly.
-  // checkVoteStatus() runs in background; if user already voted
-  // it silently swaps vote-view for results-view.
   show("vote-view");
 
-  // ── Resolve user ID ──────────────────────────────────────────
-  // Three sources in priority order:
-
-  // 1. URL param — instant, used for direct browser testing
-  //    e.g. poll-test/?intake=Jun2026&uid=testuser123
   var urlUid = new URLSearchParams(window.location.search).get("uid");
   if (urlUid) {
     uid = urlUid;
     uidReady = true;
     checkVoteStatus();
   } else {
-
-    // 2. postMessage from Moodle footer script
-    //    Moodle sends: { type: "moodleUserId", userId: 26 }
-    //    Requires the postMessage snippet in Moodle Additional HTML
     window.addEventListener("message", function(event) {
       if (!event.data || event.data.type !== "moodleUserId") return;
-      if (uidReady) return; // ignore duplicate messages
+      if (uidReady) return; 
       uid = String(event.data.userId);
       uidReady = true;
       checkVoteStatus();
     });
 
-    // 3. Fallback: proceed as "anonymous" after 3 seconds
-    //    Timeout safety net widened to 3s to guarantee slower Moodle parent systems 
-    //    finish parsing active tokens before forcing anonymous logic parameters.
     setTimeout(function() {
       if (uidReady) return;
       uid = "anonymous";
       uidReady = true;
       checkVoteStatus();
-    }, 3000);              /* increased to 3000ms safety limit to stabilize handshake */
+    }, 3000);              
   }
 
-
-  // ── Check vote status ────────────────────────────────────────
-  // Runs in background — vote options already visible to learner.
-  // If user already voted → silently swap to results.
-  // If not voted → do nothing, leave vote-view showing.
   function checkVoteStatus() {
     fetch(SCRIPT_URL, {
       method: "POST",
@@ -448,23 +416,16 @@ const POLL = {
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (!data.ok) return; // silent fail — vote-view stays visible
+      if (!data.ok) return; 
       if (data.voted && !hasVoted) {
-        // Already voted on a previous visit — swap to results silently
         renderResults(data.counts, data.total, false, data.answer);
       }
-      // If not voted, do nothing — vote-view is already showing
     })
     .catch(function() {
-      // Silent fail — vote-view stays visible, learner can still try to vote
+      // Silent fail
     });
   }
 
-
-  // ── Build skeleton ───────────────────────────────────────────
-  // Creates one skel-option div per poll option so the skeleton
-  // is exactly the same height as the real vote view.
-  // Not shown on initial load but kept for edge cases.
   function buildSkeleton() {
     var skelList = document.getElementById("skel-options");
     POLL.options.forEach(function() {
@@ -474,10 +435,6 @@ const POLL = {
     });
   }
 
-
-  // ── Build options ────────────────────────────────────────────
-  // Creates one button per option from the POLL.options array.
-  // Built once on init — JS just shows/hides the vote-view div.
   function buildOptions() {
     var list = document.getElementById("options-list");
     POLL.options.forEach(function(opt, i) {
@@ -486,7 +443,6 @@ const POLL = {
       btn.textContent = opt;
       btn.addEventListener("click", function() {
         selected = i;
-        // Highlight selected, reset others
         document.querySelectorAll(".option-btn").forEach(function(b, idx) {
           b.style.borderColor = (idx === i) ? "var(--brand)" : "#ddd";
           b.style.background  = (idx === i) ? "#f4f6ff"      : "#fff";
@@ -497,32 +453,22 @@ const POLL = {
     });
   }
 
-
-  // ── Submit vote ──────────────────────────────────────────────
-  // Optimistic UI pattern:
-  // 1. Show results immediately using local counts (feels instant)
-  // 2. Send vote to Apps Script in background
-  // 3. Silently update bars with real counts when response arrives
   window.submitVote = function() {
     if (selected === null || !uidReady) return;
 
     var chosenOption = POLL.options[selected];
     hasVoted = true;
 
-    // Disable controls immediately
     document.getElementById("submit-btn").disabled = true;
     document.querySelectorAll(".option-btn").forEach(function(b) { b.disabled = true; });
 
-    // Build optimistic counts — 1 for chosen option, 0 for rest
     var optimisticCounts = {};
     POLL.options.forEach(function(opt) {
       optimisticCounts[opt] = (opt === chosenOption) ? 1 : 0;
     });
 
-    // Show results instantly — don't wait for backend
     renderResults(optimisticCounts, 1, true, chosenOption);
 
-    // Confirm with Apps Script in background
     fetch(SCRIPT_URL, {
       method: "POST",
       body: JSON.stringify({
@@ -534,21 +480,16 @@ const POLL = {
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      // Silently update bars with real numbers from the Sheet
       if (data.ok && data.counts) {
         updateBars(data.counts, data.total);
         setFooter(data.total);
       }
     })
     .catch(function() {
-      // Silent fail — optimistic results remain visible
+      // Silent fail
     });
   };
 
-
-  // ── Render results ───────────────────────────────────────────
-  // Builds result rows and switches to results view.
-  // Called on submit (optimistic) and when returning voter loads.
   function renderResults(counts, total, justVoted, myAnswer) {
     var box       = document.getElementById("results-list");
     var safeTotal = total || 0;
@@ -581,7 +522,6 @@ const POLL = {
     hide("vote-view");
     show("results-view");
 
-    // Animate bars on next paint
     requestAnimationFrame(function() {
       requestAnimationFrame(function() {
         box.querySelectorAll(".result-row").forEach(function(row, idx) {
@@ -595,10 +535,6 @@ const POLL = {
     });
   }
 
-
-  // ── Update bars silently ─────────────────────────────────────
-  // Called after backend confirms vote — updates numbers in place
-  // without re-rendering, so there's no visible flash.
   function updateBars(counts, total) {
     var safeTotal = total || 0;
     document.querySelectorAll(".result-row").forEach(function(row, idx) {
@@ -614,9 +550,6 @@ const POLL = {
     });
   }
 
-
-  // ── Set footer text ──────────────────────────────────────────
-  // "You've already voted. There are N responses so far."
   function setFooter(total) {
     var safeTotal = total || 0;
     var count = safeTotal + " response" + (safeTotal !== 1 ? "s" : "") + " so far.";
@@ -624,8 +557,6 @@ const POLL = {
     document.getElementById("total-note").textContent  = "There are " + count;
   }
 
-
-  // ── Helpers ──────────────────────────────────────────────────
   function show(id) { document.getElementById(id).style.display = "flex"; }
   function hide(id) { document.getElementById(id).style.display = "none"; }
 
@@ -635,7 +566,6 @@ const POLL = {
     document.getElementById("error-msg").textContent = msg;
     show("error-view");
   }
-
 })();
 </script>
 
