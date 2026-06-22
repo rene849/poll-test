@@ -11,10 +11,11 @@
   ║  Embedded via iframe in Moodle                               ║
   ║                                                              ║
   ║  HOW IT WORKS                                                ║
-  ║  1. Poll options appear instantly (no wait)                  ║
+  ║  1. Poll options appear instantly (no skeleton wait)         ║
   ║  2. User ID is received from Moodle via postMessage          ║
   ║     (requires footer script on Moodle — see README)         ║
-  ║  3. Vote status checked in background                        ║
+  ║  3. Vote status checked in background — if already voted,    ║
+  ║     results swap in silently without any visible delay       ║
   ║  4. On submit: results shown instantly (optimistic UI),      ║
   ║     then confirmed silently with Google Apps Script          ║
   ║                                                              ║
@@ -43,10 +44,13 @@
 <style>
   /* ── Design tokens ─────────────────────────────────────────────
      Change these variables to restyle the entire poll.
-     --brand      : bar fill colour and button background
-     --bar-bg     : empty bar track background
-     --text       : primary text colour
-     --text-muted : secondary/hint text
+     --brand        : bar fill colour and button background
+     --bar-bg       : empty bar track background
+     --text         : primary text colour
+     --text-muted   : secondary/hint text
+     --focus        : keyboard focus ring colour — matches Moodle
+     --error-bg     : error banner background
+     --error-text   : error banner text and border colour
      ──────────────────────────────────────────────────────────── */
   :root {
     --brand:      #2E45B8;   /* Economist Chicago 45 */
@@ -56,6 +60,10 @@
     --bg:         #ffffff;
     --radius:     4px;
     --font:       system-ui, 'Segoe UI', sans-serif;
+    --focus:      #E3120B;   /* matches Moodle keyboard focus colour */
+    --error-bg:   #ffffff;   /* white for accessibility — avoids low contrast */
+    --error-text: #E3120B;   /* brand red text */
+    --error-border: #E3120B; /* brand red border */
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -91,15 +99,13 @@
 
   /* ── View switching ────────────────────────────────────────────
      All views hidden by default. JS calls show()/hide() to switch.
+     vote-view is shown immediately on load — no skeleton wait.
      ──────────────────────────────────────────────────────────── */
   #loading-view, #vote-view, #results-view {
     display: none;
     flex-direction: column;
     flex-grow: 1;
   }
-
-  /* Loading view shown by default via inline style on the element */
-  #loading-view { display: flex; }
 
   .options, .results {
     display: flex;
@@ -110,6 +116,9 @@
   /* ── Option buttons ────────────────────────────────────────────
      Fixed height (50px) — must match .result-row height so the
      layout doesn't shift when switching from vote to results view.
+
+     focus-visible uses --focus ring to match Moodle's keyboard
+     navigation style. outline-offset keeps ring outside the border.
      ──────────────────────────────────────────────────────────── */
   .option-btn {
     display: flex;
@@ -127,8 +136,14 @@
     height: 50px;             /* keep in sync with .result-row height */
   }
 
-  .option-btn:hover    { background: #f9f9f9; border-color: var(--brand); }
+  .option-btn:hover { background: #f9f9f9; border-color: var(--brand); }
   .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Keyboard focus ring — brand red to match Moodle */
+  .option-btn:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
 
   /* ── Submit button ─────────────────────────────────────────────
      Fixed height (44px) — must match .footer-text-line height.
@@ -152,6 +167,12 @@
   .submit-btn:hover    { background: #1a2a6e; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+  /* Keyboard focus ring on submit button */
+  .submit-btn:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
   /* ── Result rows ───────────────────────────────────────────────
      Fixed height (74px) matching option-btn + label + bar.
      IMPORTANT: if you change padding or font sizes, re-measure
@@ -163,7 +184,7 @@
     display: flex;
     flex-direction: column;
     border-radius: var(--radius);
-    height: 74px;             /* option-label (~20px) + gap (8px) + bar (20px) + padding (26px) */
+    height: 74px;             /* result-label (~20px) + gap (8px) + bar (20px) + padding (26px) */
   }
 
   .result-label {
@@ -198,15 +219,19 @@
     width: 0%;
     transition: width 0.5s cubic-bezier(0.1,0.5,0.5,1);
     display: flex;
-    align-items: center;
+    align-items: center;      /* vertically centres content in bar */
     justify-content: flex-end;
     min-width: 24px;
   }
 
-  /* Vote count inside the bar */
+  /* ── Vote count inside bar ─────────────────────────────────────
+     line-height: 1 prevents text descenders pushing the number
+     off-centre within the bar height.
+     ──────────────────────────────────────────────────────────── */
   .inner-number {
     color: white;
     font-size: 11px;
+    line-height: 1;            /* prevents descenders shifting text off-centre */
     padding-right: 0.5rem;
   }
 
@@ -237,9 +262,9 @@
   }
 
   /* ── Skeleton loader ───────────────────────────────────────────
-     Shown while waiting for the user ID + backend check.
-     Uses shimmer animation (more polished than simple pulse).
-     Dimensions match the real buttons so no layout shift on load.
+     Kept in code but no longer shown on initial load.
+     Only used if JS explicitly calls show("loading-view").
+     Dimensions match real buttons so no layout shift if shown.
      ──────────────────────────────────────────────────────────── */
   .skel {
     border-radius: var(--radius);
@@ -265,24 +290,27 @@
     100% { background-position: -200% 0; }
   }
 
-  /* ── Error state ───────────────────────────────────────────── */
+  /* ── Error state ───────────────────────────────────────────────
+     White background for accessibility — avoids contrast issues.
+     Brand red (#E3120B) on text and border for clear signalling.
+     ──────────────────────────────────────────────────────────── */
   .error-banner {
     padding: 16px;
-    background: #fdf3f2;
-    border: 1px solid #e8b4b0;
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
     border-radius: var(--radius);
     font-size: 14px;
-    color: #7a2020;
+    color: var(--error-text);
     line-height: 1.5;
     text-align: center;
   }
 
-#error-view {
-  display: none;
-  flex-grow: 1;
-  align-items: flex-start;
-  justify-content: flex-start;
-}
+  #error-view {
+    display: none;
+    flex-grow: 1;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
 
   @media (max-width: 480px) {
     .poll { padding: 16px; }
@@ -326,18 +354,17 @@ const POLL = {
   <div class="poll-question" id="poll-question"></div>
 
   <!-- SKELETON VIEW
-       Shown immediately on page load while we wait for:
-       1. Moodle to send the user ID via postMessage
-       2. Apps Script to confirm vote status
-       Skeleton dimensions mirror real buttons exactly. -->
+       Available but not shown on initial load.
+       Kept for edge cases where JS explicitly needs it. -->
   <div id="loading-view">
-    <div id="skel-options"></div><!-- filled by JS to match option count -->
+    <div id="skel-options"></div>
     <div class="skel skel-submit"></div>
   </div>
 
   <!-- VOTE VIEW
-       Shown after skeleton once we know user hasn't voted yet.
-       Options built dynamically from POLL.options array. -->
+       Shown immediately on page load — no waiting for backend.
+       If user has already voted, JS swaps this out silently
+       for results-view once checkVoteStatus() resolves. -->
   <div id="vote-view">
     <div class="options" id="options-list"></div>
     <button class="submit-btn" id="submit-btn" disabled onclick="submitVote()">
@@ -348,7 +375,8 @@ const POLL = {
 
   <!-- RESULTS VIEW
        Shown immediately on submit (optimistic) then updated
-       silently once Apps Script confirms the real vote counts. -->
+       silently once Apps Script confirms the real vote counts.
+       Also shown if checkVoteStatus() finds user already voted. -->
   <div id="results-view">
     <div class="results" id="results-list"></div>
     <!-- Footer sits in the same space as the submit button -->
@@ -388,6 +416,12 @@ const POLL = {
     return;
   }
 
+  // ── Show vote options immediately ─────────────────────────────
+  // No skeleton wait — learner sees options instantly.
+  // checkVoteStatus() runs in background; if user already voted
+  // it silently swaps vote-view for results-view.
+  show("vote-view");
+
   // ── Resolve user ID ──────────────────────────────────────────
   // Three sources in priority order:
 
@@ -411,23 +445,22 @@ const POLL = {
       checkVoteStatus();
     });
 
-    // 3. Fallback: proceed as "anonymous" after 3 seconds
-    //    Ensures the poll always loads even if postMessage fails.
+    // 3. Fallback: proceed as "anonymous" after 1 second
+    //    Reduced from 3s — postMessage is reliable in production.
     //    Anonymous users can vote but duplicate prevention won't work.
     setTimeout(function() {
       if (uidReady) return;
       uid = "anonymous";
       uidReady = true;
       checkVoteStatus();
-    }, 3000);
+    }, 1000);              /* reduced from 3000ms — postMessage arrives well within 1s */
   }
 
 
   // ── Check vote status ────────────────────────────────────────
-  // Runs in the background after uid is resolved.
-  // Asks Apps Script: has this user already voted for this intake?
-  // If yes  → show frozen results immediately
-  // If no   → show the voting options
+  // Runs in background — vote options already visible to learner.
+  // If user already voted → silently swap to results.
+  // If not voted → do nothing, leave vote-view showing.
   function checkVoteStatus() {
     fetch(SCRIPT_URL, {
       method: "POST",
@@ -435,22 +468,15 @@ const POLL = {
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      hide("loading-view");
-      if (!data.ok) {
-        // Backend error — show options anyway so learner can try to vote
-        show("vote-view");
-        return;
-      }
-      if (data.voted) {
+      if (!data.ok) return; // silent fail — vote-view stays visible
+      if (data.voted && !hasVoted) {
+        // Already voted on a previous visit — swap to results silently
         renderResults(data.counts, data.total, false, data.answer);
-      } else {
-        show("vote-view");
       }
+      // If not voted, do nothing — vote-view is already showing
     })
     .catch(function() {
-      // Network error — show options anyway
-      hide("loading-view");
-      show("vote-view");
+      // Silent fail — vote-view stays visible, learner can still try to vote
     });
   }
 
@@ -458,6 +484,7 @@ const POLL = {
   // ── Build skeleton ───────────────────────────────────────────
   // Creates one skel-option div per poll option so the skeleton
   // is exactly the same height as the real vote view.
+  // Not shown on initial load but kept for edge cases.
   function buildSkeleton() {
     var skelList = document.getElementById("skel-options");
     POLL.options.forEach(function() {
@@ -631,8 +658,8 @@ const POLL = {
 
 })();
 </script>
-  
- <script>
+
+<script>
 (function() {
   var lastHeight = 0;
   var stableCount = 0;
@@ -671,6 +698,6 @@ const POLL = {
   }
 })();
 </script>
-  </body>
-</html>
 
+</body>
+</html>
