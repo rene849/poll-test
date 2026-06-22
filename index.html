@@ -105,7 +105,7 @@
 
   /* Keyboard focus ring — increased by 2px (from 3px to 5px) to align with Moodle */
   .option-btn:focus-visible {
-    outline: 4px solid var(--focus);
+    outline: 5px solid var(--focus);
     outline-offset: 1px;
   }
 
@@ -166,6 +166,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    height: 20px;              /* Matches bar track layout dimensions precisely */
   }
 
   .bar-track {
@@ -205,12 +206,19 @@
     padding: 0 !important;     
   }
 
+  /* Percent text configuration locked down with absolute centering metrics */
   .result-pct {
-    font-size: 14px;           /* Standardized results text height per instruction */
+    font-size: 14px !important;/* Standardized results text height per instruction */
     min-width: 38px;
     text-align: right;
     font-weight: 500;
     color: var(--text);
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 20px !important;   /* Matches track heights to clear tracking anomalies */
+    line-height: 1 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   /* ── Footer line ───────────────────────────────────────────────
@@ -263,19 +271,19 @@
 
   /* ── Error state ───────────────────────────────────────────────
      White background for accessibility — avoids contrast issues.
-     Brand red (#E3120B) on text and border for clear signalling.
+     Brand red (#E3120B) text and border locked down with absolute overrides.
      Clean layout scales cleanly with medium-weight font tokening.
      ──────────────────────────────────────────────────────────── */
   .error-banner {
-    padding: 16px;
-    background: var(--error-bg);
-    border: 1px solid var(--error-border);
-    border-radius: var(--radius);
-    font-size: 14px;           /* Reverted cleanly to standard layout sizes */
-    font-weight: 500;          /* Applied clean medium weighting tweak */
-    color: var(--error-text);
-    line-height: 1.5;
-    text-align: center;
+    padding: 16px !important;
+    background: var(--error-bg) !important;
+    border: 1px solid var(--error-border) !important;
+    border-radius: var(--radius) !important;
+    font-size: 14px !important; 
+    font-weight: 500 !important;
+    color: var(--error-text) !important; /* Locks down Economist Hex Specification #E3120B */
+    line-height: 1.5 !important;
+    text-align: center !important;
   }
 
   #error-view {
