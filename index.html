@@ -103,10 +103,10 @@
   .option-btn:hover { background: #f9f9f9; border-color: var(--brand); }
   .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* Keyboard focus ring — increased to 3px width to improve visual identification */
+  /* Keyboard focus ring — increased by 2px (from 3px to 5px) to align with Moodle */
   .option-btn:focus-visible {
-    outline: 3px solid var(--focus);
-    outline-offset: 2px;
+    outline: 5px solid var(--focus);
+    outline-offset: 1px;
   }
 
   /* ── Submit button ─────────────────────────────────────────────
@@ -131,10 +131,10 @@
   .submit-btn:hover    { background: #1a2a6e; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* Keyboard focus ring on submit button — increased to 3px width */
+  /* Keyboard focus ring on submit button — increased by 2px (from 3px to 5px) */
   .submit-btn:focus-visible {
-    outline: 3px solid var(--focus);
-    outline-offset: 2px;
+    outline: 5px solid var(--focus);
+    outline-offset: 1px;
   }
 
   /* ── Result rows ───────────────────────────────────────────────
@@ -152,7 +152,7 @@
   }
 
   .result-label {
-    font-size: 14px;
+    font-size: 14px;           /* Standardized results text height per instruction */
     font-weight: 500;
     padding-bottom: 0.5rem;
     color: var(--text);
@@ -206,7 +206,7 @@
   }
 
   .result-pct {
-    font-size: 14px;
+    font-size: 14px;           /* Standardized results text height per instruction */
     min-width: 38px;
     text-align: right;
     font-weight: 500;
@@ -219,7 +219,7 @@
      ──────────────────────────────────────────────────────────── */
   .footer-text-line {
     margin-top: 16px;
-    font-size: 13px;
+    font-size: 14px;           /* Scaled cleanly from 13px to 14px per instruction */
     color: var(--text-muted);
     text-align: center;
     height: 44px;              /* keep in sync with .submit-btn height */
@@ -297,6 +297,7 @@
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI2asjsvXhJ9RHo3GFlSbbAvRL08knfKty_iX64SHv6hwM7gix5WR2IRV0XOGpClIQ/exec";
 
+// Clean layout configuration block
 const POLL = {
   question: "Which learning format do you find most effective?",
   options: [
@@ -345,6 +346,9 @@ const POLL = {
   var hasVoted = false;   
   var selected = null;    
 
+  // Generate local caching lookup keys specific to the intake instance
+  var CACHE_KEY = intakeId ? "ee-poll-voted-" + intakeId : null;
+
   document.getElementById("poll-question").textContent = POLL.question;
   buildSkeleton();
   buildOptions();
@@ -354,7 +358,20 @@ const POLL = {
     return;
   }
 
-  show("vote-view");
+  // ── Local Storage Optimization Check ─────────────────────────────
+  // Instantly displays results screen layout if student has voted on this device before.
+  // Completely eliminates perceived network latency from the user loop.
+  var cachedAnswer = CACHE_KEY ? localStorage.getItem(CACHE_KEY) : null;
+  if (cachedAnswer) {
+    hasVoted = true;
+    var initialCounts = {};
+    POLL.options.forEach(function(opt) {
+      initialCounts[opt] = (opt === cachedAnswer) ? 1 : 0;
+    });
+    renderResults(initialCounts, 1, false, cachedAnswer);
+  } else {
+    show("vote-view");
+  }
 
   var urlUid = new URLSearchParams(window.location.search).get("uid");
   if (urlUid) {
@@ -386,8 +403,20 @@ const POLL = {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (!data.ok) return; 
-      if (data.voted && !hasVoted) {
+      
+      // Update local storage records dynamically if database sync confirms previous execution
+      if (data.voted && CACHE_KEY) {
+        localStorage.setItem(CACHE_KEY, data.answer);
+      }
+      
+      if (data.voted) {
         renderResults(data.counts, data.total, false, data.answer);
+      } else if (hasVoted && !data.voted) {
+        // Edge condition override: cache existed but sheet marks user as unvoted (e.g. data manual clear)
+        if (CACHE_KEY) localStorage.removeItem(CACHE_KEY);
+        hasVoted = false;
+        hide("results-view");
+        show("vote-view");
       }
     })
     .catch(function() {
@@ -395,8 +424,7 @@ const POLL = {
     });
   }
 
-  // Creates one skel-option div per poll option so the skeleton
-  // is exactly the same height as the real vote view.
+  // Creates one skel-option div per poll option so the skeleton is exactly the same height
   function buildSkeleton() {
     var skelList = document.getElementById("skel-options");
     POLL.options.forEach(function() {
@@ -406,7 +434,7 @@ const POLL = {
     });
   }
 
-  // Creates one button per option from the POLL.options array.
+  // Creates one button per option from the POLL.options array
   function buildOptions() {
     var list = document.getElementById("options-list");
     POLL.options.forEach(function(opt, i) {
@@ -431,6 +459,11 @@ const POLL = {
 
     var chosenOption = POLL.options[selected];
     hasVoted = true;
+
+    // Cache the selection locally right away to capture the state change instantly
+    if (CACHE_KEY) {
+      localStorage.setItem(CACHE_KEY, chosenOption);
+    }
 
     document.getElementById("submit-btn").disabled = true;
     document.querySelectorAll(".option-btn").forEach(function(b) { b.disabled = true; });
@@ -527,7 +560,7 @@ const POLL = {
     var safeTotal = total || 0;
     var count = safeTotal + " response" + (safeTotal !== 1 ? "s" : "") + " so far.";
     document.getElementById("footer-text").textContent = "You've already voted.";
-    document.getElementById("total-note").textContent  = "There are " + count;
+    document.getElementById("total-note").textContent  = " There are " + count;
   }
 
   function show(id) { document.getElementById(id).style.display = "flex"; }
@@ -544,7 +577,7 @@ const POLL = {
 </script>
 
 <script>
-// Frame messaging tracking hook to dynamic height checks 
+// Frame messaging heights alignment hooks
 (function() {
   var lastHeight = 0;
   var stableCount = 0;
