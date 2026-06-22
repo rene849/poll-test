@@ -41,6 +41,7 @@
   ╚══════════════════════════════════════════════════════════════╝
 -->
 
+
 <style>
   /* ── Design tokens ─────────────────────────────────────────────
      Change these variables to restyle the entire poll.
@@ -218,24 +219,26 @@
     background: var(--brand);
     width: 0%;
     transition: width 0.5s cubic-bezier(0.1,0.5,0.5,1);
-    display: flex;
-    align-items: center;      /* Vertically centers layout content */
-    justify-content: center;   /* Perfectly balances numbers horizontally inside the fill wrapper */
-    min-width: 18px;           /* Prevents 0% responses from turning into clipped squares */
+    position: relative;        /* absolute anchor base for text numbers */
+    display: block;            /* unbinds structural flex layouts causing whitespace gaps */
+    min-width: 24px;           /* ensures clear baseline size for low responses */
   }
 
   /* ── Vote count inside bar ─────────────────────────────────────
-     line-height explicitly configured to match track bounding boxes 
-     preventing text descenders from clipping or misaligning.
+     Positioning anchored directly to the right wall of the active blue track.
+     This completely removes the layout gap/padding artifact shown in the screenshot.
      ──────────────────────────────────────────────────────────── */
   .inner-number {
     color: white;
     font-size: 11px;
     font-weight: 600;
-    line-height: 20px;         /* Locked to bar height token to run exact inline centering */
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    line-height: 20px;         /* Equal to track height token for seamless vertical centering */
+    position: absolute;        /* Locks layout tracking directly to parent boundaries */
+    right: 8px;                /* Explicit right margin alignment block */
+    top: 0;
+    display: inline-block;     /* Clears external text-flow wrappers */
+    margin: 0;
+    padding: 0;
   }
 
   .result-pct {
@@ -422,15 +425,15 @@ const POLL = {
       checkVoteStatus();
     });
 
-    // 3. Fallback: proceed as "anonymous" after 1 second
-    //    Reduced from 3s — postMessage is reliable in production.
-    //    Anonymous users can vote but duplicate prevention won't work.
+    // 3. Fallback: proceed as "anonymous" after 3 seconds
+    //    Timeout safety net widened to 3s to guarantee slower Moodle parent systems 
+    //    finish parsing active tokens before forcing anonymous logic parameters.
     setTimeout(function() {
       if (uidReady) return;
       uid = "anonymous";
       uidReady = true;
       checkVoteStatus();
-    }, 1000);              /* reduced from 3000ms — postMessage arrives well within 1s */
+    }, 3000);              /* increased to 3000ms safety limit to stabilize handshake */
   }
 
 
@@ -642,4 +645,39 @@ const POLL = {
   var stableCount = 0;
 
   function sendHeight() {
-    var currentHeight = document
+    var currentHeight = document.body.scrollHeight;
+    if (currentHeight === lastHeight) {
+      stableCount++;
+      if (stableCount >= 3) return;
+    } else {
+      stableCount = 0;
+      lastHeight = currentHeight;
+    }
+    window.parent.postMessage({
+      type: 'iframe-height',
+      height: currentHeight
+    }, '*');
+  }
+
+  setTimeout(function() {
+    sendHeight();
+    var retryCount = 0;
+    var retryInterval = setInterval(function() {
+      sendHeight();
+      retryCount++;
+      if (retryCount >= 10) clearInterval(retryInterval);
+    }, 300);
+  }, 500);
+
+  if (window.ResizeObserver) {
+    var observer = new ResizeObserver(function() {
+      stableCount = 0;
+      sendHeight();
+    });
+    observer.observe(document.body);
+  }
+})();
+</script>
+
+</body>
+</html>
