@@ -47,23 +47,23 @@
      --brand        : bar fill colour and button background
      --bar-bg       : empty bar track background
      --text         : primary text colour
-     --text-muted   : secondary/hint text
+     --text-muted   : secondary/hint text — set to #0D0D0D for AAA compliance
      --focus        : keyboard focus ring colour — matches Moodle
      --error-bg     : error banner background
-     --error-text   : error banner text and border colour
+     --error-text   : error banner text and border colour — #E3120B preserved
      ──────────────────────────────────────────────────────────── */
   :root {
     --brand:      #2E45B8;   /* Economist Chicago 45 */
     --bar-bg:     #ebedfa;   /* Economist Chicago 95 */
     --text:       #0d0d0d;
-    --text-muted: #555555;
+    --text-muted: #0d0d0d;   /* Set to brand dark color to guarantee AAA compliance */
     --bg:         #ffffff;
     --radius:     4px;
     --font:       system-ui, 'Segoe UI', sans-serif;
     --focus:      #E3120B;   /* matches Moodle keyboard focus colour */
     --error-bg:   #ffffff;   /* white for accessibility — avoids low contrast */
-    --error-text: #E3120B;   /* brand red text */
-    --error-border: #E3120B; /* brand red border */
+    --error-text: #E3120B;   /* brand red text preserved */
+    --error-border: #E3120B; /* brand red border preserved */
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -133,15 +133,15 @@
     width: 100%;
     transition: 0.15s;
     font-family: var(--font);
-    height: 50px;             /* keep in sync with .result-row height */
+    height: 50px;              /* keep in sync with .result-row height */
   }
 
   .option-btn:hover { background: #f9f9f9; border-color: var(--brand); }
   .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* Keyboard focus ring — brand red to match Moodle */
+  /* Keyboard focus ring — increased to 3px width to improve visual identification */
   .option-btn:focus-visible {
-    outline: 2px solid var(--focus);
+    outline: 3px solid var(--focus);
     outline-offset: 2px;
   }
 
@@ -161,15 +161,15 @@
     font-family: var(--font);
     font-size: 15px;
     transition: opacity 0.2s, background 0.15s;
-    height: 44px;             /* keep in sync with .footer-text-line height */
+    height: 44px;              /* keep in sync with .footer-text-line height */
   }
 
   .submit-btn:hover    { background: #1a2a6e; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* Keyboard focus ring on submit button */
+  /* Keyboard focus ring on submit button — increased to 3px width */
   .submit-btn:focus-visible {
-    outline: 2px solid var(--focus);
+    outline: 3px solid var(--focus);
     outline-offset: 2px;
   }
 
@@ -184,7 +184,7 @@
     display: flex;
     flex-direction: column;
     border-radius: var(--radius);
-    height: 74px;             /* result-label (~20px) + gap (8px) + bar (20px) + padding (26px) */
+    height: 74px;              /* result-label (~20px) + gap (8px) + bar (20px) + padding (26px) */
   }
 
   .result-label {
@@ -233,6 +233,7 @@
     font-size: 11px;
     line-height: 1;            /* prevents descenders shifting text off-centre */
     padding-right: 0.5rem;
+    margin-top: -1px;          /* Centered perfectly within the blue container bar */
   }
 
   .result-pct {
@@ -252,13 +253,14 @@
     font-size: 13px;
     color: var(--text-muted);
     text-align: center;
-    height: 44px;             /* keep in sync with .submit-btn height */
+    height: 44px;              /* keep in sync with .submit-btn height */
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
     background: var(--bar-bg);
     border-radius: var(--radius);
+    font-weight: 500;
   }
 
   /* ── Skeleton loader ───────────────────────────────────────────
@@ -274,14 +276,14 @@
   }
 
   .skel-option {
-    height: 50px;             /* matches .option-btn height */
+    height: 50px;              /* matches .option-btn height */
     margin-bottom: 10px;
   }
 
   .skel-option:last-child { margin-bottom: 0; }
 
   .skel-submit {
-    height: 44px;             /* matches .submit-btn height */
+    height: 44px;              /* matches .submit-btn height */
     margin-top: 16px;
   }
 
@@ -293,15 +295,17 @@
   /* ── Error state ───────────────────────────────────────────────
      White background for accessibility — avoids contrast issues.
      Brand red (#E3120B) on text and border for clear signalling.
+     Font scale and weight expanded to 18px / Bold to confirm with AA large text rules.
      ──────────────────────────────────────────────────────────── */
   .error-banner {
     padding: 16px;
     background: var(--error-bg);
     border: 1px solid var(--error-border);
     border-radius: var(--radius);
-    font-size: 14px;
+    font-size: 18px;           /* Set to 18px to pass WCAG AA contrast rules for #E3120B */
+    font-weight: 700;          /* Made bold to cleanly satisfy large text requirements without growing height */
     color: var(--error-text);
-    line-height: 1.5;
+    line-height: 1.4;
     text-align: center;
   }
 
@@ -316,22 +320,12 @@
     .poll { padding: 16px; }
     .poll-question { font-size: 16px; }
     .option-btn { font-size: 14px; }
+    .error-banner { font-size: 16px; } /* Clean scaling variant for small devices */
   }
 </style>
 </head>
 <body>
 
-<!--
-  ══════════════════════════════════════════════════════════════
-  POLL CONFIG — the only section developers need to edit
-  ══════════════════════════════════════════════════════════════
-  SCRIPT_URL : Google Apps Script web app URL — set once, never changes
-  POLL       : question text and answer options for this poll
-
-  OPTIONS in Apps Script MUST match POLL.options exactly (same
-  spelling, same capitalisation) or vote counts will not tally.
-  ══════════════════════════════════════════════════════════════
--->
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI2asjsvXhJ9RHo3GFlSbbAvRL08knfKty_iX64SHv6hwM7gix5WR2IRV0XOGpClIQ/exec";
 
@@ -345,26 +339,15 @@ const POLL = {
   ]
 };
 </script>
-<!-- ══════════════ END CONFIG ═════════════════════════════════ -->
-
-
 <div class="poll">
 
-  <!-- Question — populated by JS on init -->
   <div class="poll-question" id="poll-question"></div>
 
-  <!-- SKELETON VIEW
-       Available but not shown on initial load.
-       Kept for edge cases where JS explicitly needs it. -->
   <div id="loading-view">
     <div id="skel-options"></div>
     <div class="skel skel-submit"></div>
   </div>
 
-  <!-- VOTE VIEW
-       Shown immediately on page load — no waiting for backend.
-       If user has already voted, JS swaps this out silently
-       for results-view once checkVoteStatus() resolves. -->
   <div id="vote-view">
     <div class="options" id="options-list"></div>
     <button class="submit-btn" id="submit-btn" disabled onclick="submitVote()">
@@ -373,21 +356,14 @@ const POLL = {
     <div id="vote-error-inline" class="error-banner" style="display:none"></div>
   </div>
 
-  <!-- RESULTS VIEW
-       Shown immediately on submit (optimistic) then updated
-       silently once Apps Script confirms the real vote counts.
-       Also shown if checkVoteStatus() finds user already voted. -->
   <div id="results-view">
     <div class="results" id="results-list"></div>
-    <!-- Footer sits in the same space as the submit button -->
     <div class="footer-text-line">
       <span id="footer-text">You've already voted.</span>
       <span id="total-note"></span>
     </div>
   </div>
 
-  <!-- ERROR VIEW
-       Shown if intake ID is missing or poll fails to load. -->
   <div id="error-view">
     <div class="error-banner" id="error-msg"></div>
   </div>
