@@ -5,41 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Poll</title>
 
-<!--
-  ╔══════════════════════════════════════════════════════════════╗
-  ║  LMS POLL COMPONENT                                          ║
-  ║  Embedded via iframe in Moodle                               ║
-  ║                                                              ║
-  ║  HOW IT WORKS                                                ║
-  ║  1. Poll options appear instantly (no skeleton wait)         ║
-  ║  2. User ID is received from Moodle via postMessage          ║
-  ║     (requires footer script on Moodle — see README)         ║
-  ║  3. Vote status checked in background — if already voted,    ║
-  ║     results swap in silently without any visible delay       ║
-  ║  4. On submit: results shown instantly (optimistic UI),      ║
-  ║     then confirmed silently with Google Apps Script          ║
-  ║                                                              ║
-  ║  TO CREATE A NEW POLL                                        ║
-  ║  1. Edit POLL.question and POLL.options below                ║
-  ║  2. Update OPTIONS array in Apps Script to match exactly     ║
-  ║  3. Create a new intake tab via Poll Admin menu in Sheet     ║
-  ║  4. Update Moodle iframe src: ?intake=YourIntakeName         ║
-  ║                                                              ║
-  ║  MOODLE IFRAME (update intake name per cohort only):         ║
-  ║  <iframe                                                     ║
-  ║    src="https://rene849.github.io/poll-test/?intake=Jun2026" ║
-  ║    style="width:100%;max-width:640px;height:490px;           ║
-  ║           border:none;display:block;margin:0 auto;"          ║
-  ║    title="Poll" allowfullscreen>                             ║
-  ║  </iframe>                                                   ║
-  ║                                                              ║
-  ║  HEIGHT GUIDE (adjust iframe height to match):               ║
-  ║  2 options → 370px                                           ║
-  ║  3 options → 430px                                           ║
-  ║  4 options → 490px                                           ║
-  ║  5 options → 550px                                           ║
-  ╚══════════════════════════════════════════════════════════════╝
--->
 <style>
   /* ── Design tokens ─────────────────────────────────────────────
      Change these variables to restyle the entire poll.
@@ -217,10 +182,11 @@
     background: var(--brand);
     width: 0%;
     transition: width 0.5s cubic-bezier(0.1,0.5,0.5,1);
-    display: flex;
-    align-items: center;       /* Vertically centers numbers inside the bar */
-    justify-content: center;   /* Perfectly centers numbers horizontally within the blue area */
-    min-width: 24px;           /* Provides clean proportions for low/0% responses */
+    display: flex !important;   
+    align-items: center !important; 
+    justify-content: center !important; 
+    min-width: 24px;           
+    padding: 0 !important;     
   }
 
   /* ── Vote count inside bar ─────────────────────────────────────
@@ -228,12 +194,15 @@
      vertical alignment flow across varying VLE viewports.
      ──────────────────────────────────────────────────────────── */
   .inner-number {
-    color: white;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1;
-    margin: 0;
-    padding: 0;
+    color: white !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    display: block !important;
+    width: auto !important;
+    margin: 0 auto !important; 
+    padding: 0 !important;     
   }
 
   .result-pct {
@@ -426,6 +395,8 @@ const POLL = {
     });
   }
 
+  // Creates one skel-option div per poll option so the skeleton
+  // is exactly the same height as the real vote view.
   function buildSkeleton() {
     var skelList = document.getElementById("skel-options");
     POLL.options.forEach(function() {
@@ -435,6 +406,7 @@ const POLL = {
     });
   }
 
+  // Creates one button per option from the POLL.options array.
   function buildOptions() {
     var list = document.getElementById("options-list");
     POLL.options.forEach(function(opt, i) {
@@ -453,6 +425,7 @@ const POLL = {
     });
   }
 
+  // Optimistic UI patterns for submissions
   window.submitVote = function() {
     if (selected === null || !uidReady) return;
 
@@ -560,6 +533,7 @@ const POLL = {
   function show(id) { document.getElementById(id).style.display = "flex"; }
   function hide(id) { document.getElementById(id).style.display = "none"; }
 
+  // Fallback error messaging
   function showError(msg) {
     hide("loading-view");
     hide("vote-view");
@@ -570,6 +544,7 @@ const POLL = {
 </script>
 
 <script>
+// Frame messaging tracking hook to dynamic height checks 
 (function() {
   var lastHeight = 0;
   var stableCount = 0;
